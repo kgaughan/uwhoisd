@@ -69,9 +69,7 @@ def split_fqdn(fqdn):
 
 
 def get_whois_server(suffix, overrides, zone):
-    """
-    Returns the WHOIS server hostname for a given zone.
-    """
+    """Returns the WHOIS server hostname for a given zone."""
     return overrides[zone] if zone in overrides else zone + '.' + suffix
 
 
@@ -86,9 +84,7 @@ class Timeout(Exception):
 
 
 class WhoisClient(diesel.Client):
-    """
-    A WHOIS client for diesel.
-    """
+    """A WHOIS client for diesel."""
 
     __slots__ = ()
 
@@ -165,9 +161,7 @@ def read_config(parser):
 
 
 class Responder(object):
-    """
-    Responds to requests.
-    """
+    """Responds to requests."""
 
     __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
 
@@ -179,9 +173,7 @@ class Responder(object):
         self.recursion_patterns = recursion_patterns
 
     def get_whois_server(self, zone):
-        """
-        Get the WHOIS server for the given zone.
-        """
+        """Get the WHOIS server for the given zone."""
         return get_whois_server(self.suffix, self.overrides, zone)
 
     def get_registrar_whois_server(self, zone, response):
@@ -198,9 +190,7 @@ class Responder(object):
         return self.prefixes[zone] if zone in self.prefixes else ''
 
     def whois(self, query, zone):
-        """
-        Query the appropriate WHOIS server.
-        """
+        """Query the appropriate WHOIS server."""
         # Query the registry's WHOIS server.
         with WhoisClient(self.get_whois_server(zone), PORT) as client:
             response = client.whois(self.get_prefix(zone) + query)
@@ -215,9 +205,7 @@ class Responder(object):
         return response
 
     def respond(self, _addr):
-        """
-        Respond to a single request.
-        """
+        """Respond to a single request."""
         query = diesel.until_eol().rstrip(CRLF).lower()
         if FQDN_PATTERN.match(query) is None:
             diesel.send("; Bad request: '%s'\r\n" % query)
@@ -232,9 +220,7 @@ class Responder(object):
 
 
 def main():
-    """
-    Execute the daemon.
-    """
+    """Execute the daemon."""
     if len(sys.argv) != 2:
         print >> sys.stderr, USAGE % os.path.basename(sys.argv[0])
         return 1
