@@ -102,7 +102,7 @@ class WhoisClient(diesel.Client):
         result = []
         try:
             while True:
-                evt, data = diesel.first(sleep=5, receive=8192)
+                evt, data = diesel.first(sleep=5, receive=2048)
                 if evt == 'sleep':
                     raise Timeout(self.addr)
                 result.append(data)
