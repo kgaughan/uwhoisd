@@ -173,6 +173,13 @@ class Responder(object):
         """
         return get_whois_server(self.suffix, self.overrides, zone)
 
+    def get_registrar_whois_server(self, zone, response):
+        """
+        Extract the registrar's WHOIS server from the registry response.
+        """
+        matches = self.recursion_patterns[zone].search(response)
+        return None if matches is None else matches.group('server')
+
     def get_prefix(self, zone):
         """
         Gets the prefix required when querying the servers for the given zone.
@@ -194,15 +201,13 @@ class Responder(object):
             # Query the registry's WHOIS server.
             server = self.get_whois_server(zone)
             response = whois(server, self.get_prefix(zone) + query)
-
             # Thin registry? Query the registrar's WHOIS server.
             if zone in self.recursion_patterns:
-                matches = self.recursion_patterns[zone].search(response)
-                if matches is None:
-                    diesel.send("; Registrar WHOIS server unknown.\r\n")
+                server = self.get_registrar_whois_server(zone, response)
+                if server is None:
+                    diesel.send("; Registrar WHOIS server not found.\r\n")
                     return
-                response = whois(matches.group('server'), query)
-
+                response = whois(server, query)
             diesel.send(response)
         except Timeout, ex:
             diesel.send("; Slow response from %s.\r\n" % ex.server)
