@@ -1,1 +1,2 @@
-include LICENSE requirements.txt
+include LICENSE requirements.txt uwhoisd.ini
+recursive-include tests *
