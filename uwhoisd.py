@@ -243,12 +243,17 @@ def main():
     parser.read(sys.argv[1])
     ensure_sections_present(
         parser, ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'))
-    iface, port, suffix, overrides, prefixes, recursion_patterns = \
-        read_config(parser)
+    try:
+        iface, port, suffix, overrides, prefixes, recursion_patterns = \
+            read_config(parser)
+    except Exception, ex:
+        print >> sys.stderr, "Could not parse config file: %s" % str(ex)
+        return 1
 
     responder = Responder(suffix, overrides, prefixes, recursion_patterns)
     diesel.quickstart(diesel.Service(responder.respond, port, iface))
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
