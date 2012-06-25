@@ -200,11 +200,11 @@ class Responder(object):
         Respond to a single request.
         """
         query = diesel.until_eol().rstrip(CRLF).lower()
-        try:
-            _, zone = split_fqdn(query)
-        except ValueError:
+        if FQDN_PATTERN.match(query) is None:
             diesel.send("; Bad request: '%s'\r\n" % query)
             return
+
+        _, zone = split_fqdn(query)
 
         try:
             diesel.send(self.whois(query, zone))
