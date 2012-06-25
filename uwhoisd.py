@@ -74,6 +74,16 @@ def get_whois_server(suffix, overrides, zone):
     return overrides[zone] if zone in overrides else zone + '.' + suffix
 
 
+class Timeout(Exception):
+    """Request to downstream server timed out."""
+
+    __slots__ = ('server')
+
+    def __init__(self, server):
+        super(Timeout, self).__init__()
+        self.server = server
+
+
 class WhoisClient(diesel.Client):
     """
     A WHOIS client for diesel.
@@ -84,8 +94,9 @@ class WhoisClient(diesel.Client):
     @diesel.call
     def whois(self, query):
         """
-        Perform a query against the server. Returns either the server's
-        response, or `None` if the connection timed out.
+        Perform a query against the server. Either returns the server's
+        response or raises a `Timeout` exception if the downstream server
+        took too long.
         """
         diesel.send(query + CRLF)
         result = []
@@ -93,7 +104,7 @@ class WhoisClient(diesel.Client):
             while True:
                 evt, data = diesel.first(sleep=5, receive=8192)
                 if evt == 'sleep':
-                    return None
+                    raise Timeout(self.addr)
                 result.append(data)
         except diesel.ConnectionClosed, ex:
             if ex.buffer:
@@ -179,25 +190,22 @@ class Responder(object):
             diesel.send("; Bad request: '%s'\r\n" % query)
             return
 
-        # Query the registry's WHOIS server.
-        server = self.get_whois_server(zone)
-        response = whois(server, self.get_prefix(zone) + query)
-        if response is None:
-            diesel.send("; Slow response from registry WHOIS server.\r\n")
-            return
+        try:
+            # Query the registry's WHOIS server.
+            server = self.get_whois_server(zone)
+            response = whois(server, self.get_prefix(zone) + query)
 
-        # Thin registry? Query the registrar's WHOIS server.
-        if zone in self.recursion_patterns:
-            matches = self.recursion_patterns[zone].search(response)
-            if matches is None:
-                diesel.send("; Registrar WHOIS server unknown.\r\n")
-                return
-            response = whois(matches.group('server'), query)
-            if response is None:
-                diesel.send("; Slow response from registrar WHOIS server.\r\n")
-                return
+            # Thin registry? Query the registrar's WHOIS server.
+            if zone in self.recursion_patterns:
+                matches = self.recursion_patterns[zone].search(response)
+                if matches is None:
+                    diesel.send("; Registrar WHOIS server unknown.\r\n")
+                    return
+                response = whois(matches.group('server'), query)
 
-        diesel.send(response)
+            diesel.send(response)
+        except Timeout, ex:
+            diesel.send("; Slow response from %s.\r\n" % ex.server)
 
 
 def main():
