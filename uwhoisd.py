@@ -108,11 +108,34 @@ class WhoisClient(diesel.Client):
                 result.append(ex.buffer)
         return ''.join(result)
 
+
 def ensure_sections_present(parser, sections):
     """Ensure all sections are present, even if empty."""
     for section in sections:
         if not parser.has_section(section):
             parser.add_section(section)
+
+
+def validate_overrides(overrides):
+    """Ensure all the override entries in the config file are good."""
+    for zone, server in overrides.iteritems():
+        if ZONE_PATTERN.match(zone) is None:
+            raise Exception(
+                "Bad zone in overrides: %s" % zone)
+        if FQDN_PATTERN.match(server) is None:
+            raise Exception(
+                "Bad server for zone %s in overrides: %s" % (zone, server))
+        if len(socket.getaddrinfo(server, None)) == 0:
+            raise Exception("The name '%s' does not resolve." % server)
+
+
+def validate_prefixes(prefixes):
+    """Ensure prefixes are good."""
+    for zone in prefixes:
+        if ZONE_PATTERN.match(zone) is None:
+            raise Exception(
+                "Bad zone in prefixes: %s" % zone)
+
 
 def read_config(parser):
     """
@@ -132,24 +155,10 @@ def read_config(parser):
         raise Exception("Malformed suffix: %s" % suffix)
 
     overrides = dict(parser.items('overrides'))
-    for zone, server in overrides.iteritems():
-        if ZONE_PATTERN.match(zone) is None:
-            raise Exception(
-                "Bad zone in overrides: %s" % zone)
-        if FQDN_PATTERN.match(server) is None:
-            raise Exception(
-                "Bad server for zone %s in overrides: %s" % (zone, server))
-        if len(socket.getaddrinfo(server, None)) == 0:
-            raise Exception("The name '%s' does not resolve." % server)
-
     prefixes = dict(parser.items('prefixes'))
-    for zone in prefixes:
-        if ZONE_PATTERN.match(zone) is None:
-            raise Exception(
-                "Bad zone in prefixes: %s" % zone)
+    validate_overrides(overrides)
+    validate_prefixes(prefixes)
 
-    # We could use a compilation cache for these things, but the re module does
-    # that anyway, so why bother.
     recursion_patterns = {}
     for zone, pattern in parser.items('recursion_patterns'):
         if ZONE_PATTERN.match(zone) is None:
