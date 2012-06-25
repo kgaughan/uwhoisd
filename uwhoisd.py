@@ -76,7 +76,7 @@ def get_whois_server(suffix, overrides, zone):
 class Timeout(Exception):
     """Request to downstream server timed out."""
 
-    __slots__ = ('server')
+    __slots__ = ('server',)
 
     def __init__(self, server):
         super(Timeout, self).__init__()
