@@ -31,6 +31,7 @@ import diesel
 import re
 import os.path
 import sys
+import socket
 from ConfigParser import SafeConfigParser
 
 
@@ -40,6 +41,8 @@ __email__ = 'k@stereochro.me'
 
 
 USAGE = "Usage: %s <config>"
+
+PORT = socket.getservbyname('whois', 'tcp')
 
 
 def split_fqdn(fqdn):
@@ -96,7 +99,7 @@ def whois(server, query):
     """
     Helper function for using `WhoisClient`.
     """
-    with WhoisClient(server, 43) as client:
+    with WhoisClient(server, PORT) as client:
         return client.whois(query)
 
 
@@ -117,7 +120,7 @@ def read_config(parser):
         return default
 
     iface = safe_get('uwhoisd', 'iface', '0.0.0.0')
-    port = int(safe_get('uwhoisd', 'port', 4243))
+    port = int(safe_get('uwhoisd', 'port', PORT))
     suffix = safe_get('uwhoisd', 'suffix', 'whois-servers.net')
 
     # TODO: Check all hostnames and zone names are well-formed.
