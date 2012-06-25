@@ -112,14 +112,6 @@ class WhoisClient(diesel.Client):
         return ''.join(result)
 
 
-def whois(server, query):
-    """
-    Helper function for using `WhoisClient`.
-    """
-    with WhoisClient(server, PORT) as client:
-        return client.whois(query)
-
-
 def read_config(parser):
     """
     Extract the configuration from a parsed configuration file, checking that
@@ -186,6 +178,23 @@ class Responder(object):
         """
         return self.prefixes[zone] if zone in self.prefixes else ''
 
+    def whois(self, query, zone):
+        """
+        Query the appropriate WHOIS server.
+        """
+        # Query the registry's WHOIS server.
+        with WhoisClient(self.get_whois_server(zone), PORT) as client:
+            response = client.whois(self.get_prefix(zone) + query)
+
+        # Thin registry? Query the registrar's WHOIS server.
+        if zone in self.recursion_patterns:
+            server = self.get_registrar_whois_server(zone, response)
+            if server is not None:
+                with WhoisClient(server, PORT) as client:
+                    response = client.whois(query)
+
+        return response
+
     def respond(self, _addr):
         """
         Respond to a single request.
@@ -198,17 +207,7 @@ class Responder(object):
             return
 
         try:
-            # Query the registry's WHOIS server.
-            server = self.get_whois_server(zone)
-            response = whois(server, self.get_prefix(zone) + query)
-            # Thin registry? Query the registrar's WHOIS server.
-            if zone in self.recursion_patterns:
-                server = self.get_registrar_whois_server(zone, response)
-                if server is None:
-                    diesel.send("; Registrar WHOIS server not found.\r\n")
-                    return
-                response = whois(server, query)
-            diesel.send(response)
+            diesel.send(self.whois(query, zone))
         except Timeout, ex:
             diesel.send("; Slow response from %s.\r\n" % ex.server)
 
