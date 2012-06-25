@@ -124,9 +124,20 @@ def read_config(parser):
     return (iface, port, suffix, overrides, prefixes, recursion_patterns)
 
 
-def respond(addr):
-    query = diesel.until_eol()
-    diesel.send("You sent: [%s]\n" % query.strip())
+class Responder(object):
+
+    __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
+
+    def __init__(self, suffix, overrides, prefixes, recursion_patterns):
+        super(Responder, self).__init__()
+        self.suffix = suffix
+        self.overrides = overrides
+        self.prefixes = prefixes
+        self.recursion_patterns = recursion_patterns
+
+    def respond(self, _addr):
+        query = diesel.until_eol()
+        diesel.send("You sent: [%s]\n" % query.strip())
 
 
 def main():
@@ -142,7 +153,8 @@ def main():
     iface, port, suffix, overrides, prefixes, recursion_patterns = \
         read_config(parser)
 
-    diesel.quickstart(diesel.Service(respond, port, iface))
+    responder = Responder(suffix, overrides, prefixes, recursion_patterns)
+    diesel.quickstart(diesel.Service(responder.respond, port, iface))
 
 
 if __name__ == '__main__':
