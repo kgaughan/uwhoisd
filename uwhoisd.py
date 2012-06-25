@@ -35,7 +35,7 @@ import socket
 from ConfigParser import SafeConfigParser
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
@@ -112,17 +112,17 @@ class WhoisClient(diesel.Client):
                 result.append(ex.buffer)
         return ''.join(result)
 
+def ensure_sections_present(parser, sections):
+    """Ensure all sections are present, even if empty."""
+    for section in sections:
+        if not parser.has_section(section):
+            parser.add_section(section)
 
 def read_config(parser):
     """
     Extract the configuration from a parsed configuration file, checking that
     the data contained within is valid.
     """
-    # Ensure all sections are present, even if empty.
-    for section in ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'):
-        if not parser.has_section(section):
-            parser.add_section(section)
-
     def safe_get(section, option, default):
         """Get a configuration option safely."""
         if parser.has_option(section, option):
@@ -132,15 +132,33 @@ def read_config(parser):
     iface = safe_get('uwhoisd', 'iface', '0.0.0.0')
     port = int(safe_get('uwhoisd', 'port', PORT))
     suffix = safe_get('uwhoisd', 'suffix', 'whois-servers.net')
+    if FQDN_PATTERN.match(suffix) is None:
+        raise Exception("Malformed suffix: %s" % suffix)
 
-    # TODO: Check all hostnames and zone names are well-formed.
     overrides = dict(parser.items('overrides'))
+    for zone, server in overrides.iteritems():
+        if ZONE_PATTERN.match(zone) is None:
+            raise Exception(
+                "Bad zone in overrides: %s" % zone)
+        if FQDN_PATTERN.match(server) is None:
+            raise Exception(
+                "Bad server for zone %s in overrides: %s" % (zone, server))
+        if len(socket.getaddrinfo(server, None)) == 0:
+            raise Exception("The name '%s' does not resolve." % server)
+
     prefixes = dict(parser.items('prefixes'))
+    for zone in prefixes:
+        if ZONE_PATTERN.match(zone) is None:
+            raise Exception(
+                "Bad zone in prefixes: %s" % zone)
 
     # We could use a compilation cache for these things, but the re module does
     # that anyway, so why bother.
     recursion_patterns = {}
     for zone, pattern in parser.items('recursion_patterns'):
+        if ZONE_PATTERN.match(zone) is None:
+            raise Exception(
+                "Bad zone in recursion_patterns: %s" % zone)
         recursion_patterns[zone] = re.compile(pattern)
 
     return (iface, port, suffix, overrides, prefixes, recursion_patterns)
@@ -223,6 +241,8 @@ def main():
 
     parser = SafeConfigParser(allow_no_value=True)
     parser.read(sys.argv[1])
+    ensure_sections_present(
+        parser, ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'))
     iface, port, suffix, overrides, prefixes, recursion_patterns = \
         read_config(parser)
 

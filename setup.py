@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='uwhoisd',
-    version='0.0.1',
+    version='0.0.2',
     description="Universal domain WHOIS proxy server.",
     long_description=open('README').read(),
     url='https://github.com/kgaughan/uwhoisd/',
