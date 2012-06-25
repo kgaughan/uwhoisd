@@ -66,10 +66,17 @@ def get_whois_server(suffix, overrides, zone):
 
 
 class WhoisClient(diesel.Client):
+    """
+    A WHOIS client for diesel.
+    """
 
     __slots__ = ()
 
     def whois(self, query):
+        """
+        Perform a query against the server. Returns either the server's
+        response, or `None` if the connection timed out.
+        """
         diesel.send(query + "\r\n")
         result = []
         try:
