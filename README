@@ -1,4 +1,9 @@
 uwhoisd
 =======
 
-A 'Universal WHOIS' proxy server - you query it, it gives back the correct details
+A 'Universal WHOIS' proxy server: you query it for information about a
+particular domain, it works out the correct WHOIS server to query and gives back
+the correct details.
+
+It is only intended for use with domain names currently, but could be
+generalised to work with other types of WHOIS server.
