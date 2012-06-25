@@ -134,6 +134,9 @@ def read_config(parser):
 
 
 class Responder(object):
+    """
+    Responds to requests.
+    """
 
     __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
 
@@ -144,9 +147,48 @@ class Responder(object):
         self.prefixes = prefixes
         self.recursion_patterns = recursion_patterns
 
+    def get_whois_server(self, zone):
+        """
+        Get the WHOIS server for the given zone.
+        """
+        return get_whois_server(self.suffix, self.overrides, zone)
+
+    def get_prefix(self, zone):
+        """
+        Gets the prefix required when querying the servers for the given zone.
+        """
+        return self.prefixes[zone] if zone in self.prefixes else ''
+
     def respond(self, _addr):
-        query = diesel.until_eol()
-        diesel.send("You sent: [%s]\n" % query.strip())
+        """
+        Respond to a single request.
+        """
+        query = diesel.until_eol().rstrip("\r\n").lower()
+        try:
+            _, zone = split_fqdn(query)
+        except ValueError:
+            diesel.send("; Bad request: '%s'\r\n" % query)
+            return
+
+        # Query the registry's WHOIS server.
+        server = self.get_whois_server(zone)
+        response = whois(server, self.get_prefix(zone) + query)
+        if response is None:
+            diesel.send("; Slow response from registry WHOIS server.\r\n")
+            return
+
+        # Thin registry? Query the registrar's WHOIS server.
+        if zone in self.recursion_patterns:
+            matches = self.recursion_patterns[zone].search(response)
+            if matches is None:
+                diesel.send("; Registrar WHOIS server unknown.\r\n")
+                return
+            response = whois(matches.group('server'), query)
+            if response is None:
+                diesel.send("; Slow response from registrar WHOIS server.\r\n")
+                return
+
+        diesel.send(response)
 
 
 def main():
