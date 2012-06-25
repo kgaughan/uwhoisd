@@ -46,7 +46,8 @@ PORT = socket.getservbyname('whois', 'tcp')
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
-FQDN_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$', re.I)
+FQDN_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$')
+ZONE_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+)?$')
 
 CRLF = "\r\n"
 
