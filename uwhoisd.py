@@ -44,6 +44,10 @@ USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname('whois', 'tcp')
 
+# We only accept ASCII or ACE-encoded domain names. IDNs must be converted
+# to ACE first.
+FQDN_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$', re.I)
+
 
 def split_fqdn(fqdn):
     """
