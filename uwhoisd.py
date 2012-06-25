@@ -72,6 +72,7 @@ class WhoisClient(diesel.Client):
 
     __slots__ = ()
 
+    @diesel.call
     def whois(self, query):
         """
         Perform a query against the server. Returns either the server's
@@ -89,6 +90,14 @@ class WhoisClient(diesel.Client):
             if ex.buffer:
                 result.append(ex.buffer)
         return ''.join(result)
+
+
+def whois(server, query):
+    """
+    Helper function for using `WhoisClient`.
+    """
+    with WhoisClient(server, 43) as client:
+        return client.whois(query)
 
 
 def read_config(parser):
