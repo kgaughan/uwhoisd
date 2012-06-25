@@ -28,6 +28,10 @@ A 'universal' WHOIS proxy server.
 """
 
 import diesel
+import re
+import os.path
+import sys
+from ConfigParser import SafeConfigParser
 
 
 __version__ = '0.0.1'
@@ -37,22 +41,38 @@ __email__ = 'k@stereochro.me'
 
 USAGE = "Usage: %s <config>"
 
-DEFAULTS = {
-    'uwhoisd': {
-        'interface': '0.0.0.0',
-        'port': 4243,
-        'default_suffix': 'whois-servers.net'
-    }
-}
-
 
 def read_config(parser):
     """
     Extract the configuration from a parsed configuration file, checking that
     the data contained within is valid.
     """
-    # interface, port, default_suffix, overrides, prefixes, recursion_patterns
-    return ('', 0, '', [], [], [])
+    # Ensure all sections are present, even if empty.
+    for section in ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'):
+        if not parser.has_section(section):
+            parser.add_section(section)
+
+    def safe_get(section, option, default):
+        """Get a configuration option safely."""
+        if parser.has_option(section, option):
+            return parser.get(section, option)
+        return default
+
+    iface = safe_get('uwhoisd', 'iface', '0.0.0.0')
+    port = int(safe_get('uwhoisd', 'port', 4243))
+    suffix = safe_get('uwhoisd', 'suffix', 'whois-servers.net')
+
+    # TODO: Check all hostnames and zone names are well-formed.
+    overrides = dict(parser.items('overrides'))
+    prefixes = dict(parser.items('prefixes'))
+
+    # We could use a compilation cache for these things, but the re module does
+    # that anyway, so why bother.
+    recursion_patterns = {}
+    for zone, pattern in parser.items('recursion_patterns'):
+        recursion_patterns[zone] = re.compile(pattern)
+
+    return (iface, port, suffix, overrides, prefixes, recursion_patterns)
 
 
 def respond(addr):
@@ -61,7 +81,19 @@ def respond(addr):
 
 
 def main():
-    diesel.quickstart(diesel.Service(respond, 1043))
+    """
+    Execute the daemon.
+    """
+    if len(sys.argv) != 2:
+        print >> sys.stderr, USAGE % os.path.basename(sys.argv[0])
+        return 1
+
+    parser = SafeConfigParser(allow_no_value=True)
+    parser.read(sys.argv[1])
+    iface, port, suffix, overrides, prefixes, recursion_patterns = \
+        read_config(parser)
+
+    diesel.quickstart(diesel.Service(respond, port, iface))
 
 
 if __name__ == '__main__':
