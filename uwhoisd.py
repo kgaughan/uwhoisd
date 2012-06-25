@@ -48,6 +48,8 @@ PORT = socket.getservbyname('whois', 'tcp')
 # to ACE first.
 FQDN_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$', re.I)
 
+CRLF = "\r\n"
+
 
 def split_fqdn(fqdn):
     """
@@ -85,7 +87,7 @@ class WhoisClient(diesel.Client):
         Perform a query against the server. Returns either the server's
         response, or `None` if the connection timed out.
         """
-        diesel.send(query + "\r\n")
+        diesel.send(query + CRLF)
         result = []
         try:
             while True:
@@ -170,7 +172,7 @@ class Responder(object):
         """
         Respond to a single request.
         """
-        query = diesel.until_eol().rstrip("\r\n").lower()
+        query = diesel.until_eol().rstrip(CRLF).lower()
         try:
             _, zone = split_fqdn(query)
         except ValueError:
