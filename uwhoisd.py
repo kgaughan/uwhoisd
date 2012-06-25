@@ -42,6 +42,48 @@ __email__ = 'k@stereochro.me'
 USAGE = "Usage: %s <config>"
 
 
+def split_fqdn(fqdn):
+    """
+    Splits an FQDN into the domain name and zone.
+
+    >>> split_fqdn('stereochro.me')
+    ['stereochro', 'me']
+    >>> split_fqdn('stereochro.me.')
+    ['stereochro', 'me']
+    >>> split_fqdn('stereochrome')
+    ['stereochrome']
+    >>> split_fqdn('keithgaughan.co.uk')
+    ['keithgaughan', 'co.uk']
+    """
+    return fqdn.rstrip('.').split('.', 1)
+
+
+def get_whois_server(suffix, overrides, zone):
+    """
+    Returns the WHOIS server hostname for a given zone.
+    """
+    return overrides[zone] if zone in overrides else zone + '.' + suffix
+
+
+class WhoisClient(diesel.Client):
+
+    __slots__ = ()
+
+    def whois(self, query):
+        diesel.send(query + "\r\n")
+        result = []
+        try:
+            while True:
+                evt, data = diesel.first(sleep=5, receive=8192)
+                if evt == 'sleep':
+                    return None
+                result.append(data)
+        except diesel.ConnectionClosed, ex:
+            if ex.buffer:
+                result.append(ex.buffer)
+        return ''.join(result)
+
+
 def read_config(parser):
     """
     Extract the configuration from a parsed configuration file, checking that
