@@ -242,20 +242,17 @@ def read_config(parser):
     return (iface, port, suffix, overrides, prefixes, recursion_patterns)
 
 
-class Responder(object):
-    """Responds to requests."""
+class UWhois(object):
+    """Universal WHOIS proxy."""
 
-    __slots__ = (
-        'suffix', 'overrides', 'prefixes', 'recursion_patterns',
-        'cache')
+    __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
 
     def __init__(self, suffix, overrides, prefixes, recursion_patterns):
-        super(Responder, self).__init__()
+        super(UWhois, self).__init__()
         self.suffix = suffix
         self.overrides = overrides
         self.prefixes = prefixes
         self.recursion_patterns = recursion_patterns
-        self.cache = Cache()
 
     def get_whois_server(self, zone):
         """Get the WHOIS server for the given zone."""
@@ -289,15 +286,35 @@ class Responder(object):
 
         return response
 
-    def caching_whois(self, query, zone):
-        """A version of the `whois()` method that caches its response."""
+
+class CachingUWhois(UWhois):
+    """Caching variant of `UWhois`."""
+
+    __slots__ = ('cache',)
+
+    def __init__(self, suffix, overrides, prefixes, recursion_patterns):
+        super(CachingUWhois, self).__init__(
+            suffix, overrides, prefixes, recursion_patterns)
+        self.cache = Cache()
+
+    def whois(self, query, zone):
         self.cache.evict_expired()
         if query in self.cache:
             response = self.cache[query]
         else:
-            response = self.whois(query, zone)
+            response = super(CachingUWhois, self).whois(query, zone)
             self.cache[query] = response
         return response
+
+
+class Responder(object):
+    """Responds to requests."""
+
+    __slots__ = ('uwhois',)
+
+    def __init__(self, uwhois):
+        super(Responder, self).__init__()
+        self.uwhois = uwhois
 
     def respond(self, _addr):
         """Respond to a single request."""
@@ -309,7 +326,7 @@ class Responder(object):
         _, zone = split_fqdn(query)
 
         try:
-            diesel.send(self.caching_whois(query, zone))
+            diesel.send(self.uwhois.whois(query, zone))
         except Timeout, ex:
             diesel.send("; Slow response from %s.\r\n" % ex.server)
 
@@ -331,7 +348,8 @@ def main():
         print >> sys.stderr, "Could not parse config file: %s" % str(ex)
         return 1
 
-    responder = Responder(suffix, overrides, prefixes, recursion_patterns)
+    uwhois = CachingUWhois(suffix, overrides, prefixes, recursion_patterns)
+    responder = Responder(uwhois)
     diesel.quickstart(diesel.Service(responder.respond, port, iface))
     return 0
 
