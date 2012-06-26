@@ -272,8 +272,10 @@ class UWhois(object):
         """
         return self.prefixes[zone] if zone in self.prefixes else ''
 
-    def whois(self, query, zone):
+    def whois(self, query):
         """Query the appropriate WHOIS server."""
+        _, zone = split_fqdn(query)
+
         # Query the registry's WHOIS server.
         with WhoisClient(self.get_whois_server(zone), PORT) as client:
             response = client.whois(self.get_prefix(zone) + query)
@@ -298,12 +300,12 @@ class CachingUWhois(UWhois):
             suffix, overrides, prefixes, recursion_patterns)
         self.cache = Cache()
 
-    def whois(self, query, zone):
+    def whois(self, query):
         self.cache.evict_expired()
         if query in self.cache:
             response = self.cache[query]
         else:
-            response = super(CachingUWhois, self).whois(query, zone)
+            response = super(CachingUWhois, self).whois(query)
             self.cache[query] = response
         return response
 
@@ -315,10 +317,8 @@ def respond(uwhois, _addr):
         diesel.send("; Bad request: '%s'\r\n" % query)
         return
 
-    _, zone = split_fqdn(query)
-
     try:
-        diesel.send(uwhois.whois(query, zone))
+        diesel.send(uwhois.whois(query))
     except Timeout, ex:
         diesel.send("; Slow response from %s.\r\n" % ex.server)
 
