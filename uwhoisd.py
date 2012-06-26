@@ -299,6 +299,7 @@ class Responder(object):
         _, zone = split_fqdn(query)
 
         try:
+            self.cache.evict_expired()
             if query in self.cache:
                 response = self.cache[query]
             else:
