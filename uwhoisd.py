@@ -34,6 +34,7 @@ import sys
 import socket
 import time
 import collections
+import functools
 from ConfigParser import SafeConfigParser
 
 
@@ -307,28 +308,19 @@ class CachingUWhois(UWhois):
         return response
 
 
-class Responder(object):
-    """Responds to requests."""
+def respond(uwhois, _addr):
+    """Respond to a single request."""
+    query = diesel.until_eol().rstrip(CRLF).lower()
+    if FQDN_PATTERN.match(query) is None:
+        diesel.send("; Bad request: '%s'\r\n" % query)
+        return
 
-    __slots__ = ('uwhois',)
+    _, zone = split_fqdn(query)
 
-    def __init__(self, uwhois):
-        super(Responder, self).__init__()
-        self.uwhois = uwhois
-
-    def respond(self, _addr):
-        """Respond to a single request."""
-        query = diesel.until_eol().rstrip(CRLF).lower()
-        if FQDN_PATTERN.match(query) is None:
-            diesel.send("; Bad request: '%s'\r\n" % query)
-            return
-
-        _, zone = split_fqdn(query)
-
-        try:
-            diesel.send(self.uwhois.whois(query, zone))
-        except Timeout, ex:
-            diesel.send("; Slow response from %s.\r\n" % ex.server)
+    try:
+        diesel.send(uwhois.whois(query, zone))
+    except Timeout, ex:
+        diesel.send("; Slow response from %s.\r\n" % ex.server)
 
 
 def main():
@@ -349,8 +341,8 @@ def main():
         return 1
 
     uwhois = CachingUWhois(suffix, overrides, prefixes, recursion_patterns)
-    responder = Responder(uwhois)
-    diesel.quickstart(diesel.Service(responder.respond, port, iface))
+    service = diesel.Service(functools.partial(respond, uwhois), port, iface)
+    diesel.quickstart(service)
     return 0
 
 
