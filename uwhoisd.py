@@ -112,15 +112,17 @@ class WhoisClient(diesel.Client):
 
 
 class Cache(object):
-    """A simple hybrid LRU/LFU cache."""
+    """A simple LFU cache."""
 
-    # This is implemented as a quasi-LRU cache. The eviction queue contains
+    # This is implemented as an LFU cache. The eviction queue contains
     # 2-tuples consisting of the time the item was put into the cache and the
     # cache key. The cache maps cache keys onto 2-tuples consisting of a
     # counter giving the number of times this item occurs on the eviction queue
-    # and the value. This gives the cache some hybrid properties of an LRU and
-    # an LFU cache, though this is more a consequence of it being the simplest
-    # form of cache to inplement than anything.
+    # and the value.
+    #
+    # I may end up reimplementing this as an LRU cache if it turns out that's
+    # more apt, but I haven't went that route as an LRU cache is somewhat more
+    # awkward and involved to implement correctly.
 
     __slots__ = ('cache', 'queue', 'max_size', 'max_age', 'clock')
 
