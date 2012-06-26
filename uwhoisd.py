@@ -289,6 +289,16 @@ class Responder(object):
 
         return response
 
+    def caching_whois(self, query, zone):
+        """A version of the `whois()` method that caches its response."""
+        self.cache.evict_expired()
+        if query in self.cache:
+            response = self.cache[query]
+        else:
+            response = self.whois(query, zone)
+            self.cache[query] = response
+        return response
+
     def respond(self, _addr):
         """Respond to a single request."""
         query = diesel.until_eol().rstrip(CRLF).lower()
@@ -299,13 +309,7 @@ class Responder(object):
         _, zone = split_fqdn(query)
 
         try:
-            self.cache.evict_expired()
-            if query in self.cache:
-                response = self.cache[query]
-            else:
-                response = self.whois(query, zone)
-                self.cache[query] = response
-            diesel.send(response)
+            diesel.send(self.caching_whois(query, zone))
         except Timeout, ex:
             diesel.send("; Slow response from %s.\r\n" % ex.server)
 
