@@ -245,7 +245,9 @@ def read_config(parser):
 class Responder(object):
     """Responds to requests."""
 
-    __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
+    __slots__ = (
+        'suffix', 'overrides', 'prefixes', 'recursion_patterns',
+        'cache')
 
     def __init__(self, suffix, overrides, prefixes, recursion_patterns):
         super(Responder, self).__init__()
@@ -253,6 +255,7 @@ class Responder(object):
         self.overrides = overrides
         self.prefixes = prefixes
         self.recursion_patterns = recursion_patterns
+        self.cache = Cache()
 
     def get_whois_server(self, zone):
         """Get the WHOIS server for the given zone."""
@@ -296,7 +299,12 @@ class Responder(object):
         _, zone = split_fqdn(query)
 
         try:
-            diesel.send(self.whois(query, zone))
+            if query in self.cache:
+                response = self.cache[query]
+            else:
+                response = self.whois(query, zone)
+                self.cache[query] = response
+            diesel.send(response)
         except Timeout, ex:
             diesel.send("; Slow response from %s.\r\n" % ex.server)
 
