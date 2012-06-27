@@ -258,6 +258,8 @@ def respond(whois, _addr):
 
     try:
         diesel.send(whois(query))
+    except diesel.ClientConnectionError:
+        diesel.send("; Connection refused by downstream server\r\n")
     except Timeout, ex:
         diesel.send("; Slow response from %s.\r\n" % ex.server)
 
