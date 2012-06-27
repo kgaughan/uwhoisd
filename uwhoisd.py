@@ -50,7 +50,6 @@ PORT = socket.getservbyname('whois', 'tcp')
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
 FQDN_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$')
-ZONE_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+)?$')
 
 CRLF = "\r\n"
 
@@ -183,77 +182,37 @@ class Cache(object):
         self.queue.append((self.clock(), key))
 
 
-def ensure_sections_present(parser, sections):
-    """Ensure all sections are present, even if empty."""
-    for section in sections:
-        if not parser.has_section(section):
-            parser.add_section(section)
-
-
-def validate_overrides(overrides):
-    """Ensure all the override entries in the config file are good."""
-    for zone, server in overrides.iteritems():
-        if ZONE_PATTERN.match(zone) is None:
-            raise Exception(
-                "Bad zone in overrides: %s" % zone)
-        if FQDN_PATTERN.match(server) is None:
-            raise Exception(
-                "Bad server for zone %s in overrides: %s" % (zone, server))
-        if len(socket.getaddrinfo(server, None)) == 0:
-            raise Exception("The name '%s' does not resolve." % server)
-
-
-def validate_prefixes(prefixes):
-    """Ensure prefixes are good."""
-    for zone in prefixes:
-        if ZONE_PATTERN.match(zone) is None:
-            raise Exception(
-                "Bad zone in prefixes: %s" % zone)
-
-
-def read_config(parser):
-    """
-    Extract the configuration from a parsed configuration file, checking that
-    the data contained within is valid.
-    """
-    def safe_get(section, option, default):
-        """Get a configuration option safely."""
-        if parser.has_option(section, option):
-            return parser.get(section, option)
-        return default
-
-    iface = safe_get('uwhoisd', 'iface', '0.0.0.0')
-    port = int(safe_get('uwhoisd', 'port', PORT))
-    suffix = safe_get('uwhoisd', 'suffix', 'whois-servers.net')
-    if FQDN_PATTERN.match(suffix) is None:
-        raise Exception("Malformed suffix: %s" % suffix)
-
-    overrides = dict(parser.items('overrides'))
-    prefixes = dict(parser.items('prefixes'))
-    validate_overrides(overrides)
-    validate_prefixes(prefixes)
-
-    recursion_patterns = {}
-    for zone, pattern in parser.items('recursion_patterns'):
-        if ZONE_PATTERN.match(zone) is None:
-            raise Exception(
-                "Bad zone in recursion_patterns: %s" % zone)
-        recursion_patterns[zone] = re.compile(pattern)
-
-    return (iface, port, suffix, overrides, prefixes, recursion_patterns)
-
-
 class UWhois(object):
     """Universal WHOIS proxy."""
 
     __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
 
-    def __init__(self, suffix, overrides, prefixes, recursion_patterns):
+    def __init__(self):
         super(UWhois, self).__init__()
-        self.suffix = suffix
-        self.overrides = overrides
-        self.prefixes = prefixes
-        self.recursion_patterns = recursion_patterns
+        self.suffix = None
+        self.overrides = {}
+        self.prefixes = {}
+        self.recursion_patterns = {}
+
+    def _get_dict(self, parser, section):
+        """Pull a dictionary out of the config safely."""
+        if not parser.has_section(section):
+            parser.add_section(section)
+        setattr(self, section, dict(parser.items(section)))
+
+    def read_config(self, parser):
+        """Read the configuration for this object from a config file."""
+        self.suffix = parser.get('uwhoisd', 'suffix')
+        for section in ('overrides', 'prefixes'):
+            self._get_dict(parser, section)
+
+        for zone, server in self.overrides.iteritems():
+            if FQDN_PATTERN.match(server) is None:
+                raise Exception(
+                    "Bad server for zone %s in overrides: %s" % (zone, server))
+
+        for zone, pattern in parser.items('recursion_patterns'):
+            self.recursion_patterns[zone] = re.compile(pattern)
 
     def get_whois_server(self, zone):
         """Get the WHOIS server for the given zone."""
@@ -295,9 +254,8 @@ class CachingUWhois(UWhois):
 
     __slots__ = ('cache',)
 
-    def __init__(self, suffix, overrides, prefixes, recursion_patterns):
-        super(CachingUWhois, self).__init__(
-            suffix, overrides, prefixes, recursion_patterns)
+    def __init__(self):
+        super(CachingUWhois, self).__init__()
         self.cache = Cache()
 
     def whois(self, query):
@@ -329,18 +287,29 @@ def main():
         print >> sys.stderr, USAGE % os.path.basename(sys.argv[0])
         return 1
 
+    defaults = {
+        'iface': '0.0.0.0',
+        'port': str(PORT),
+        'prefix': 'whois-servers.net'}
+
     parser = SafeConfigParser(allow_no_value=True)
-    parser.read(sys.argv[1])
-    ensure_sections_present(
-        parser, ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'))
+    parser.add_section('uwhoisd')
+    for key, value in defaults.iteritems():
+        parser.set('uwhoisd', key, value)
+
+    uwhois = CachingUWhois()
+
     try:
-        iface, port, suffix, overrides, prefixes, recursion_patterns = \
-            read_config(parser)
+        parser.read(sys.argv[1])
+
+        iface = parser.get('uwhoisd', 'iface')
+        port = parser.getint('uwhoisd', 'port')
+
+        uwhois.read_config(parser)
     except Exception, ex:
         print >> sys.stderr, "Could not parse config file: %s" % str(ex)
         return 1
 
-    uwhois = CachingUWhois(suffix, overrides, prefixes, recursion_patterns)
     service = diesel.Service(functools.partial(respond, uwhois), port, iface)
     diesel.quickstart(service)
     return 0
