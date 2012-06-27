@@ -249,26 +249,7 @@ class UWhois(object):
         return response
 
 
-class CachingUWhois(UWhois):
-    """Caching variant of `UWhois`."""
-
-    __slots__ = ('cache',)
-
-    def __init__(self):
-        super(CachingUWhois, self).__init__()
-        self.cache = Cache()
-
-    def whois(self, query):
-        self.cache.evict_expired()
-        if query in self.cache:
-            response = self.cache[query]
-        else:
-            response = super(CachingUWhois, self).whois(query)
-            self.cache[query] = response
-        return response
-
-
-def respond(uwhois, _addr):
+def respond(whois, _addr):
     """Respond to a single request."""
     query = diesel.until_eol().rstrip(CRLF).lower()
     if FQDN_PATTERN.match(query) is None:
@@ -276,7 +257,7 @@ def respond(uwhois, _addr):
         return
 
     try:
-        diesel.send(uwhois.whois(query))
+        diesel.send(whois(query))
     except Timeout, ex:
         diesel.send("; Slow response from %s.\r\n" % ex.server)
 
@@ -297,20 +278,36 @@ def main():
     for key, value in defaults.iteritems():
         parser.set('uwhoisd', key, value)
 
-    uwhois = CachingUWhois()
-
     try:
         parser.read(sys.argv[1])
 
         iface = parser.get('uwhoisd', 'iface')
         port = parser.getint('uwhoisd', 'port')
 
+        uwhois = UWhois()
         uwhois.read_config(parser)
+
+        if parser.has_section('cache'):
+            cache = Cache(
+                max_size=parser.getint('cache', 'max_size'),
+                max_age=parser.getint('cache', 'max_age'))
+
+            def whois(query):
+                """Caching wrapper around UWhois."""
+                cache.evict_expired()
+                if query in cache:
+                    response = cache[query]
+                else:
+                    response = uwhois.whois(query)
+                    cache[query] = response
+                return response
+        else:
+            whois = uwhois.whois
     except Exception, ex:
         print >> sys.stderr, "Could not parse config file: %s" % str(ex)
         return 1
 
-    service = diesel.Service(functools.partial(respond, uwhois), port, iface)
+    service = diesel.Service(functools.partial(respond, whois), port, iface)
     diesel.quickstart(service)
     return 0
 
