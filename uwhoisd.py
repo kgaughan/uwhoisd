@@ -71,7 +71,16 @@ def split_fqdn(fqdn):
 
 
 def get_whois_server(suffix, overrides, zone):
-    """Returns the WHOIS server hostname for a given zone."""
+    """
+    Returns the WHOIS server hostname for a given zone.
+
+    >>> suffix = 'example.com'
+    >>> overrides = {'foo': 'fred.example.com', 'bar': 'wilma.example.com'}
+    >>> get_whois_server(suffix, overrides, 'foo')
+    'fred.example.com'
+    >>> get_whois_server(suffix, overrides, 'barney')
+    'barney.example.com'
+    """
     return overrides[zone] if zone in overrides else zone + '.' + suffix
 
 
