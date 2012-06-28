@@ -35,6 +35,7 @@ import socket
 import time
 import collections
 import functools
+import logging
 from ConfigParser import SafeConfigParser
 
 
@@ -52,6 +53,8 @@ PORT = socket.getservbyname('whois', 'tcp')
 FQDN_PATTERN = re.compile('^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$')
 
 CRLF = "\r\n"
+
+LOG = logging.getLogger(__name__)
 
 
 def split_fqdn(fqdn):
@@ -245,7 +248,9 @@ class UWhois(object):
         _, zone = split_fqdn(query)
 
         # Query the registry's WHOIS server.
-        with WhoisClient(self.get_whois_server(zone), PORT) as client:
+        server = self.get_whois_server(zone)
+        with WhoisClient(server, PORT) as client:
+            LOG.info("Querying %s about %s", server, query)
             response = client.whois(self.get_prefix(zone) + query)
 
         # Thin registry? Query the registrar's WHOIS server.
@@ -253,6 +258,7 @@ class UWhois(object):
             server = self.get_registrar_whois_server(zone, response)
             if server is not None:
                 with WhoisClient(server, PORT) as client:
+                    LOG.info("Recursive query to %s about %s", server, query)
                     response = client.whois(query)
 
         return response
@@ -268,8 +274,10 @@ def respond(whois, _addr):
     try:
         diesel.send(whois(query))
     except diesel.ClientConnectionError:
+        LOG.info("Connection refused")
         diesel.send("; Connection refused by downstream server\r\n")
     except Timeout, ex:
+        LOG.info("Slow response")
         diesel.send("; Slow response from %s.\r\n" % ex.server)
 
 
@@ -278,6 +286,8 @@ def main():
     if len(sys.argv) != 2:
         print >> sys.stderr, USAGE % os.path.basename(sys.argv[0])
         return 1
+
+    logging.basicConfig(level=logging.INFO)
 
     defaults = {
         'iface': '0.0.0.0',
@@ -290,15 +300,18 @@ def main():
         parser.set('uwhoisd', key, value)
 
     try:
+        LOG.info("Reading config file at '%s'", sys.argv[1])
         parser.read(sys.argv[1])
 
         iface = parser.get('uwhoisd', 'iface')
         port = parser.getint('uwhoisd', 'port')
+        LOG.info("Listen on %s:%d", iface, port)
 
         uwhois = UWhois()
         uwhois.read_config(parser)
 
         if parser.has_section('cache'):
+            LOG.info("Caching activated")
             cache = Cache(
                 max_size=parser.getint('cache', 'max_size'),
                 max_age=parser.getint('cache', 'max_age'))
@@ -307,18 +320,22 @@ def main():
                 """Caching wrapper around UWhois."""
                 cache.evict_expired()
                 if query in cache:
+                    LOG.info("Cache hit for %s", query)
                     response = cache[query]
                 else:
                     response = uwhois.whois(query)
                     cache[query] = response
                 return response
         else:
+            LOG.info("Caching deactivated")
             whois = uwhois.whois
     except Exception, ex:
         print >> sys.stderr, "Could not parse config file: %s" % str(ex)
         return 1
 
+    LOG.info("Creating service")
     service = diesel.Service(functools.partial(respond, whois), port, iface)
+    LOG.info("Starting...")
     diesel.quickstart(service)
     return 0
 
