@@ -294,7 +294,7 @@ def main():
         'port': str(PORT),
         'prefix': 'whois-servers.net'}
 
-    parser = SafeConfigParser(allow_no_value=True)
+    parser = SafeConfigParser()
     parser.add_section('uwhoisd')
     for key, value in defaults.iteritems():
         parser.set('uwhoisd', key, value)
