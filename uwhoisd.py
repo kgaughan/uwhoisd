@@ -208,9 +208,11 @@ class UWhois(object):
 
     def _get_dict(self, parser, section):
         """Pull a dictionary out of the config safely."""
-        if not parser.has_section(section):
-            parser.add_section(section)
-        setattr(self, section, dict(parser.items(section)))
+        if parser.has_section(section):
+            values = dict(parser.items(section))
+        else:
+            values = {}
+        setattr(self, section, values)
 
     def read_config(self, parser):
         """Read the configuration for this object from a config file."""
