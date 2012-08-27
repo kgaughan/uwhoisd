@@ -87,6 +87,13 @@ def get_whois_server(suffix, overrides, zone):
     return overrides[zone] if zone in overrides else zone + '.' + suffix
 
 
+def to_bool(s):
+    """
+    Converts the given string to a boolean.
+    """
+    return s.lower() in ('1', 'true', 'yes', 'on')
+
+
 class Timeout(Exception):
     """Request to downstream server timed out."""
 
@@ -197,7 +204,9 @@ class Cache(object):
 class UWhois(object):
     """Universal WHOIS proxy."""
 
-    __slots__ = ('suffix', 'overrides', 'prefixes', 'recursion_patterns')
+    __slots__ = (
+        'suffix', 'overrides', 'prefixes', 'recursion_patterns',
+        'registry_whois')
 
     def __init__(self):
         super(UWhois, self).__init__()
@@ -205,6 +214,7 @@ class UWhois(object):
         self.overrides = {}
         self.prefixes = {}
         self.recursion_patterns = {}
+        self.registry_whois = False
 
     def _get_dict(self, parser, section):
         """Pull a dictionary out of the config safely."""
@@ -216,6 +226,7 @@ class UWhois(object):
 
     def read_config(self, parser):
         """Read the configuration for this object from a config file."""
+        self.registry_whois = to_bool(parser.get('uwhoisd', 'registry_whois'))
         self.suffix = parser.get('uwhoisd', 'suffix')
         for section in ('overrides', 'prefixes'):
             self._get_dict(parser, section)
@@ -259,9 +270,11 @@ class UWhois(object):
         if zone in self.recursion_patterns:
             server = self.get_registrar_whois_server(zone, response)
             if server is not None:
+                if not self.registry_whois:
+                    response = ""
                 with WhoisClient(server, PORT) as client:
                     LOG.info("Recursive query to %s about %s", server, query)
-                    response = client.whois(query)
+                    response += client.whois(query)
 
         return response
 
@@ -294,6 +307,7 @@ def main():
     defaults = {
         'iface': '0.0.0.0',
         'port': str(PORT),
+        'registry_whois': 'false',
         'prefix': 'whois-servers.net'}
 
     parser = SafeConfigParser()
