@@ -237,7 +237,7 @@ class UWhois(object):
                     "Bad server for zone %s in overrides: %s" % (zone, server))
 
         for zone, pattern in parser.items('recursion_patterns'):
-            self.recursion_patterns[zone] = re.compile(pattern)
+            self.recursion_patterns[zone] = re.compile(pattern, re.I)
 
     def get_whois_server(self, zone):
         """Get the WHOIS server for the given zone."""
