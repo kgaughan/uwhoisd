@@ -1,6 +1,11 @@
 uwhoisd
 =======
 
+.. image:: https://secure.travis-ci.org/kgaughan/uwhoisd.png?branch=master
+   :width: 89px
+   :height: 13px 
+   :target: http://travis-ci.org/kgaughan/uwhoisd
+
 A 'Universal WHOIS' proxy server: you query it for information about a
 particular domain, it works out the correct WHOIS server to query and gives back
 the correct details.
