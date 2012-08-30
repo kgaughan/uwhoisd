@@ -13,7 +13,7 @@ HERE = path.dirname(__file__)
 def create_uwhois():
     """Prepare a UWhois object for testing."""
     parser = uwhoisd.make_default_config_parser()
-    parser.read(path.join(HERE, '..', 'uwhois.ini'))
+    parser.read(path.join(HERE, '..', 'uwhoisd.ini'))
     uwhois = uwhoisd.UWhois()
     uwhois.read_config(parser)
     return uwhois
