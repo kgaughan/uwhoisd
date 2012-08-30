@@ -296,6 +296,26 @@ def respond(whois, _addr):
         diesel.send("; Slow response from %s.\r\n" % ex.server)
 
 
+def make_default_config_parser():
+    """Creates a config parser with the bare minimum of defaults."""
+    defaults = {
+        'iface': '0.0.0.0',
+        'port': str(PORT),
+        'registry_whois': 'false',
+        'suffix': 'whois-servers.net'}
+
+    parser = SafeConfigParser()
+    parser.add_section('uwhoisd')
+    for key, value in defaults.iteritems():
+        parser.set('uwhoisd', key, value)
+
+    # Sections that need to at least be present, even if they're empty.
+    for section in ('cache', 'overrides', 'prefixes', 'recursion_patterns'):
+        parser.add_section(section)
+
+    return parser
+
+
 def main():
     """Execute the daemon."""
     if len(sys.argv) != 2:
@@ -304,16 +324,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
-    defaults = {
-        'iface': '0.0.0.0',
-        'port': str(PORT),
-        'registry_whois': 'false',
-        'prefix': 'whois-servers.net'}
-
-    parser = SafeConfigParser()
-    parser.add_section('uwhoisd')
-    for key, value in defaults.iteritems():
-        parser.set('uwhoisd', key, value)
+    parser = make_default_config_parser()
 
     try:
         logger.info("Reading config file at '%s'", sys.argv[1])
