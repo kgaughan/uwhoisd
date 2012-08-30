@@ -273,7 +273,9 @@ class UWhois(object):
                 if not self.registry_whois:
                     response = ""
                 with WhoisClient(server, PORT) as client:
-                    logger.info("Recursive query to %s about %s", server, query)
+                    logger.info(
+                        "Recursive query to %s about %s",
+                        server, query)
                     response += client.whois(query)
 
         return response
