@@ -94,6 +94,40 @@ def to_bool(s):
     return s.lower() in ('1', 'true', 'yes', 'on')
 
 
+def decode_value(s):
+    """
+    If a string is quoted, it's parsed like a python string, otherwise it's
+    passed straight through as-is.
+
+    >>> decode_value('foo')
+    'foo'
+    >>> decode_value('"foo"')
+    'foo'
+    >>> decode_value('"foo\\\\nbar\"')
+    'foo\\nbar'
+    >>> decode_value('foo\\nbar')
+    'foo\\nbar'
+    >>> decode_value('"foo')
+    Traceback (most recent call last):
+        ...
+    ValueError: The trailing quote be present and match the leading quote.
+    >>> decode_value("'foo")
+    Traceback (most recent call last):
+        ...
+    ValueError: The trailing quote be present and match the leading quote.
+    >>> decode_value("\\\"foo\\'")
+    Traceback (most recent call last):
+        ...
+    ValueError: The trailing quote be present and match the leading quote.
+    """
+    if len(s) > 1 and s[0] in ('"', "'"):
+        if s[0] != s[-1]:
+            raise ValueError(
+                "The trailing quote be present and match the leading quote.")
+        return s[1:-1].decode('string_escape')
+    return s
+
+
 class Timeout(Exception):
     """Request to downstream server timed out."""
 
@@ -219,7 +253,9 @@ class UWhois(object):
     def _get_dict(self, parser, section):
         """Pull a dictionary out of the config safely."""
         if parser.has_section(section):
-            values = dict(parser.items(section))
+            values = dict(
+                (key, decode_value(value))
+                for key, value in parser.items(section))
         else:
             values = {}
         setattr(self, section, values)
@@ -237,7 +273,9 @@ class UWhois(object):
                     "Bad server for zone %s in overrides: %s" % (zone, server))
 
         for zone, pattern in parser.items('recursion_patterns'):
-            self.recursion_patterns[zone] = re.compile(pattern, re.I)
+            self.recursion_patterns[zone] = re.compile(
+                decode_value(pattern),
+                re.I)
 
     def get_whois_server(self, zone):
         """Get the WHOIS server for the given zone."""
@@ -307,13 +345,11 @@ def make_default_config_parser():
         'suffix': 'whois-servers.net'}
 
     parser = SafeConfigParser()
-    parser.add_section('uwhoisd')
+    # Sections that need to at least be present, even if they're empty.
+    for section in ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'):
+        parser.add_section(section)
     for key, value in defaults.iteritems():
         parser.set('uwhoisd', key, value)
-
-    # Sections that need to at least be present, even if they're empty.
-    for section in ('cache', 'overrides', 'prefixes', 'recursion_patterns'):
-        parser.add_section(section)
 
     return parser
 
