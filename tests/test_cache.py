@@ -66,7 +66,7 @@ def test_lfu():
 def test_expiration():
     time = 1
 
-    cache = Cache(max_age=5, clock=lambda:time)
+    cache = Cache(max_age=5, clock=lambda: time)
 
     # Ensure that the clock value is coming from the current value of the
     # `time` variable.
@@ -114,7 +114,7 @@ def test_expiration():
 
 
 def test_eviction():
-    cache = Cache(max_size=2, clock=lambda:1)
+    cache = Cache(max_size=2, clock=lambda: 1)
 
     cache['a'] = 1
     cache['b'] = 2
