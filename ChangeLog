@@ -1,0 +1,16 @@
+.. _changelog:
+
+==============
+Change history
+==============
+
+.. _version-0.0.3:
+
+0.0.4
+=====
+:Release date: 2012-09-02T11:33:00.Z
+:By: Keith Gaughan
+
+* Initial revision with a change log.
+
+.. vim:set ft=rst:

@@ -1,2 +1,3 @@
-include LICENSE requirements.txt uwhoisd.ini
+include LICENSE ChangeLog requirements.txt uwhoisd.ini
+recursive-include docs *.rst *.py
 recursive-include tests *
