@@ -6,6 +6,7 @@ from ConfigParser import SafeConfigParser
 import collections
 import functools
 import logging
+import logging.config
 import os.path
 import re
 import socket
@@ -336,7 +337,7 @@ def main():
         print >> sys.stderr, USAGE % os.path.basename(sys.argv[0])
         return 1
 
-    logging.basicConfig(level=logging.INFO)
+    logging.config.fileConfig(sys.argv[1])
 
     parser = make_default_config_parser()
 
