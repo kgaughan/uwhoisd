@@ -34,20 +34,36 @@ CRLF = "\r\n"
 logger = logging.getLogger('uwhoisd')
 
 
-def split_fqdn(fqdn):
+def extract_tld(fqdn, third_level_tld=None):
     """
     Splits an FQDN into the domain name and zone.
 
-    >>> split_fqdn('stereochro.me')
-    ['stereochro', 'me']
-    >>> split_fqdn('stereochro.me.')
-    ['stereochro', 'me']
-    >>> split_fqdn('stereochrome')
-    ['stereochrome']
-    >>> split_fqdn('keithgaughan.co.uk')
-    ['keithgaughan', 'co.uk']
+    >>> extract_tld('stereochro.me')
+    'me'
+    >>> extract_tld('stereochro.me.')
+    'me'
+    >>> extract_tld('stereochrome')
+    'stereochrome'
+    >>> extract_tld('keithgaughan.co.uk')
+    'uk'
+    >>> extract_tld('desperate.dateless.name')
+    'name'
+    >>> extract_tld('desperate.uk.com', {'uk.com': 1})
+    'uk.com'
+    >>> extract_tld('desperate.uk.com', {})
+    'com'
     """
-    return fqdn.rstrip('.').split('.', 1)
+
+    if third_level_tld is None:
+        third_level_tld = {}
+
+    res = fqdn.rstrip('.').split('.')
+    if len(res) > 2:
+        tld = "%s.%s" % (res[-2], res[-1])
+        if tld in third_level_tld:
+            return tld
+
+    return res[-1]
 
 
 def get_whois_server(suffix, overrides, zone):
@@ -217,7 +233,7 @@ class UWhois(object):
 
     __slots__ = (
         'suffix', 'overrides', 'prefixes', 'recursion_patterns',
-        'registry_whois')
+        'registry_whois', 'third_level_tld')
 
     def __init__(self):
         super(UWhois, self).__init__()
@@ -225,6 +241,7 @@ class UWhois(object):
         self.overrides = {}
         self.prefixes = {}
         self.recursion_patterns = {}
+        self.third_level_tld = {}
         self.registry_whois = False
 
     def _get_dict(self, parser, section):
@@ -241,7 +258,7 @@ class UWhois(object):
         """Read the configuration for this object from a config file."""
         self.registry_whois = to_bool(parser.get('uwhoisd', 'registry_whois'))
         self.suffix = parser.get('uwhoisd', 'suffix')
-        for section in ('overrides', 'prefixes'):
+        for section in ('overrides', 'prefixes', 'third_level_tld'):
             self._get_dict(parser, section)
 
         for zone, server in self.overrides.iteritems():
@@ -273,7 +290,7 @@ class UWhois(object):
 
     def whois(self, query):
         """Query the appropriate WHOIS server."""
-        _, zone = split_fqdn(query)
+        zone = extract_tld(query, self.third_level_tld)
 
         # Query the registry's WHOIS server.
         server = self.get_whois_server(zone)
@@ -323,7 +340,8 @@ def make_default_config_parser():
 
     parser = SafeConfigParser()
     # Sections that need to at least be present, even if they're empty.
-    for section in ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'):
+    for section in ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns',
+                    'third_level_tld'):
         parser.add_section(section)
     for key, value in defaults.iteritems():
         parser.set('uwhoisd', key, value)
