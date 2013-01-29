@@ -217,7 +217,7 @@ class UWhois(object):
 
     __slots__ = (
         'suffix', 'overrides', 'prefixes', 'recursion_patterns',
-        'registry_whois')
+        'conservative', 'registry_whois')
 
     def __init__(self):
         super(UWhois, self).__init__()
@@ -226,6 +226,7 @@ class UWhois(object):
         self.prefixes = {}
         self.recursion_patterns = {}
         self.registry_whois = False
+        self.conservative = ()
 
     def _get_dict(self, parser, section):
         """Pull a dictionary out of the config safely."""
@@ -241,6 +242,11 @@ class UWhois(object):
         """Read the configuration for this object from a config file."""
         self.registry_whois = to_bool(parser.get('uwhoisd', 'registry_whois'))
         self.suffix = parser.get('uwhoisd', 'suffix')
+        self.conservative = [
+            zone
+            for zone in parser.get('uwhoisd', 'conservative').split("\n")
+            if zone != '']
+
         for section in ('overrides', 'prefixes'):
             self._get_dict(parser, section)
 
@@ -273,7 +279,12 @@ class UWhois(object):
 
     def whois(self, query):
         """Query the appropriate WHOIS server."""
-        _, zone = split_fqdn(query)
+        # Figure out the zone whose WHOIS server we're meant to be querying.
+        for zone in self.conservative:
+            if query.endswith('.' + zone):
+                break
+        else:
+            _, zone = split_fqdn(query)
 
         # Query the registry's WHOIS server.
         server = self.get_whois_server(zone)
