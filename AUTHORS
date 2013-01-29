@@ -6,3 +6,12 @@ Keith Gaughan <http://stereochro.me/>:
 Milos Negovanovic <https://github.com/milosn>:
 
  * CentralNIC WHOIS servers.
+
+
+General thanks:
+
+ * Grigouze <https://github.com/grigouze> who pointed out that .name ought
+   to use a more conservative method of zone discovery. I didn't use the
+   patch provided, but it did give me the idea for the approach I did end
+   up taking in the end, which also happened to simplify the handling of a
+   number of other zones too, notably .bz.
