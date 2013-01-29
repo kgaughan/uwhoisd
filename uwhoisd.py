@@ -308,9 +308,14 @@ def respond(whois, _addr):
     except diesel.ClientConnectionError:
         logger.info("Connection refused")
         diesel.send("; Connection refused by downstream server\r\n")
+    except diesel.ConnectionClosed:
+        logger.info("Connection closed by %s", addr)
     except Timeout, ex:
         logger.info("Slow response")
         diesel.send("; Slow response from %s.\r\n" % ex.server)
+    except diesel.DNSResolutionError, ex:
+        logger.error("%s", ex.message)
+        diesel.send("; %s\n\n" % ex.message)
 
 
 def make_default_config_parser():
