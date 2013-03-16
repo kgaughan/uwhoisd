@@ -2,11 +2,11 @@
 
 from __future__ import with_statement
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from buildkit import *
 
 
-META = get_metadata('uwhoisd.py')
+META = get_metadata('uwhoisd/__init__.py')
 
 
 setup(
@@ -16,9 +16,9 @@ setup(
     long_description=read('README'),
     url='https://github.com/kgaughan/uwhoisd/',
     license='MIT',
-    install_requires=read_requirements('requirements.txt'),
-    py_modules=['uwhoisd'],
+    packages=find_packages(exclude='tests'),
     zip_safe=True,
+    install_requires=read_requirements('requirements.txt'),
 
     entry_points={
         'console_scripts': [

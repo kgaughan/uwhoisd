@@ -1,3 +1,4 @@
 include LICENSE ChangeLog buildkit.py requirements.txt uwhoisd.ini AUTHORS
 recursive-include docs *.rst *.py
+recursive-include extra *.ini
 recursive-include tests *

@@ -15,6 +15,7 @@ Change history
 * CoDNS are now an independent entity.
 * Use a more conservative zone discovery policy for some queries.
 * Update recursion pattern for the bz zone.
+* Broken up into separate modules.
 
 .. _version-0.0.4:
 
