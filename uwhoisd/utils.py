@@ -9,7 +9,7 @@ import time
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
-FQDN_PATTERN = re.compile(r'^([-a-z0-9]+)(\.[-a-z0-9]+){1,2}$')
+FQDN_PATTERN = re.compile(r'^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$')
 
 
 def is_well_formed_fqdn(fqdn):

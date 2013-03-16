@@ -16,6 +16,9 @@ Change history
 * Use a more conservative zone discovery policy for some queries.
 * Update recursion pattern for the bz zone.
 * Broken up into separate modules.
+* IANA root zone database scraper.
+* Scraped WHOIS servers associated with zones in the IANA database.
+* Added details for a number of WHOIS servers not listed in IANA's database.
 
 .. _version-0.0.4:
 

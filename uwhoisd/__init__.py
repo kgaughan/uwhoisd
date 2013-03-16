@@ -70,11 +70,6 @@ class UWhois(object):
         for section in ('overrides', 'prefixes'):
             self._get_dict(parser, section)
 
-        for zone, server in self.overrides.iteritems():
-            if not utils.is_well_formed_fqdn(server):
-                raise Exception(
-                    "Bad server for zone %s in overrides: %s" % (zone, server))
-
         for zone, pattern in parser.items('recursion_patterns'):
             self.recursion_patterns[zone] = re.compile(
                 utils.decode_value(pattern),
@@ -85,8 +80,15 @@ class UWhois(object):
         Get the WHOIS server for the given zone.
         """
         if zone in self.overrides:
-            return self.overrides[zone]
-        return zone + '.' + self.suffix
+            server = self.overrides[zone]
+        else:
+            server = zone + '.' + self.suffix
+        if ':' in server:
+            server, port = server.split(':', 1)
+            port = int(port)
+        else:
+            port = PORT
+        return server, port
 
     def get_registrar_whois_server(self, zone, response):
         """
@@ -113,8 +115,9 @@ class UWhois(object):
             _, zone = utils.split_fqdn(query)
 
         # Query the registry's WHOIS server.
-        server = self.get_whois_server(zone)
-        with net.WhoisClient(server, PORT) as client:
+        server, port = self.get_whois_server(zone)
+        print (server, port)
+        with net.WhoisClient(server, port) as client:
             logger.info("Querying %s about %s", server, query)
             response = client.whois(self.get_prefix(zone) + query)
 
@@ -124,7 +127,8 @@ class UWhois(object):
             if server is not None:
                 if not self.registry_whois:
                     response = ""
-                with net.WhoisClient(server, PORT) as client:
+                print (server, port)
+                with net.WhoisClient(server, port) as client:
                     logger.info(
                         "Recursive query to %s about %s",
                         server, query)
