@@ -116,7 +116,6 @@ class UWhois(object):
 
         # Query the registry's WHOIS server.
         server, port = self.get_whois_server(zone)
-        print (server, port)
         with net.WhoisClient(server, port) as client:
             logger.info("Querying %s about %s", server, query)
             response = client.whois(self.get_prefix(zone) + query)
@@ -127,7 +126,6 @@ class UWhois(object):
             if server is not None:
                 if not self.registry_whois:
                     response = ""
-                print (server, port)
                 with net.WhoisClient(server, port) as client:
                     logger.info(
                         "Recursive query to %s about %s",
