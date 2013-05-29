@@ -10,7 +10,7 @@ import re
 import socket
 import sys
 
-from uwhoisd import utils, net
+from uwhoisd import net, utils
 
 
 __version__ = '0.0.5'
@@ -31,8 +31,13 @@ class UWhois(object):
     """
 
     __slots__ = (
-        'suffix', 'overrides', 'prefixes', 'recursion_patterns',
-        'conservative', 'registry_whois')
+        'conservative',
+        'overrides',
+        'prefixes',
+        'recursion_patterns',
+        'registry_whois',
+        'suffix',
+    )
 
     def __init__(self):
         super(UWhois, self).__init__()
@@ -143,7 +148,8 @@ def make_default_config_parser():
         'iface': '0.0.0.0',
         'port': str(PORT),
         'registry_whois': 'false',
-        'suffix': 'whois-servers.net'}
+        'suffix': 'whois-servers.net',
+    }
 
     parser = SafeConfigParser()
     # Sections that need to at least be present, even if they're empty.

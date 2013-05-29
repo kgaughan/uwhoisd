@@ -92,7 +92,13 @@ class Cache(object):
     # more apt, but I haven't went that route as an LRU cache is somewhat more
     # awkward and involved to implement correctly.
 
-    __slots__ = ('cache', 'queue', 'max_size', 'max_age', 'clock')
+    __slots__ = (
+        'cache',
+        'clock',
+        'max_age',
+        'max_size',
+        'queue',
+    )
 
     def __init__(self, max_size=256, max_age=300, clock=time.time):
         self.cache = {}
