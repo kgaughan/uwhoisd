@@ -1,0 +1,6 @@
+# Testing.
+coverage
+nose
+
+# Documentation.
+Sphinx
