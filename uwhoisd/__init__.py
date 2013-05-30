@@ -2,7 +2,6 @@
 A 'universal' WHOIS proxy server.
 """
 
-from ConfigParser import SafeConfigParser
 import logging
 import logging.config
 import os.path
@@ -21,6 +20,20 @@ __email__ = 'k@stereochro.me'
 USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname('whois', 'tcp')
+
+CONFIG = """
+[uwhoisd]
+iface=0.0.0.0
+port=4343
+registry_whois=false
+suffix=whois-servers.net
+
+[overrides]
+
+[prefixes]
+
+[recursion_patterns]
+"""
 
 logger = logging.getLogger('uwhoisd')
 
@@ -140,27 +153,6 @@ class UWhois(object):
         return response
 
 
-def make_default_config_parser():
-    """
-    Creates a config parser with the bare minimum of defaults.
-    """
-    defaults = {
-        'iface': '0.0.0.0',
-        'port': str(PORT),
-        'registry_whois': 'false',
-        'suffix': 'whois-servers.net',
-    }
-
-    parser = SafeConfigParser()
-    # Sections that need to at least be present, even if they're empty.
-    for section in ('uwhoisd', 'overrides', 'prefixes', 'recursion_patterns'):
-        parser.add_section(section)
-    for key, value in defaults.iteritems():
-        parser.set('uwhoisd', key, value)
-
-    return parser
-
-
 def main():
     """
     Execute the daemon.
@@ -171,11 +163,9 @@ def main():
 
     logging.config.fileConfig(sys.argv[1])
 
-    parser = make_default_config_parser()
-
     try:
         logger.info("Reading config file at '%s'", sys.argv[1])
-        parser.read(sys.argv[1])
+        parser = utils.make_config_parser(CONFIG, sys.argv[1])
 
         iface = parser.get('uwhoisd', 'iface')
         port = parser.getint('uwhoisd', 'port')
