@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
-
 from setuptools import setup, find_packages
 from buildkit import *
 
@@ -13,7 +11,7 @@ setup(
     name='uwhoisd',
     version=META['version'],
     description="Universal domain WHOIS proxy server.",
-    long_description=read('README'),
+    long_description=read('README') + "\n\n" + read("ChangeLog"),
     url='https://github.com/kgaughan/uwhoisd/',
     license='MIT',
     packages=find_packages(exclude='tests'),
@@ -21,12 +19,12 @@ setup(
     install_requires=read_requirements('requirements.txt'),
 
     entry_points={
-        'console_scripts': [
-            'uwhoisd = uwhoisd:main'
-        ]
+        'console_scripts': (
+            'uwhoisd = uwhoisd:main',
+        ),
     },
 
-    classifiers=[
+    classifiers=(
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: No Input/Output (Daemon)',
         'Intended Audience :: System Administrators',
@@ -35,7 +33,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Internet',
         'Topic :: System :: Networking',
-    ],
+    ),
 
     author=META['author'],
     author_email=META['email'],
