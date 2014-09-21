@@ -1,15 +1,33 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
+
+import os.path
+
 from setuptools import setup, find_packages
-from buildkit import *
 
 
-META = get_metadata('uwhoisd/__init__.py')
+def read(filename):
+    """Read files relative to this file."""
+    full_path = os.path.join(os.path.dirname(__file__), filename)
+    with open(full_path, 'r') as fh:
+        return fh.read()
+
+
+def read_requirements(requirements_path):
+    """Read a requirements file, stripping out the detritus."""
+    requirements = []
+    with open(requirements_path, 'r') as fh:
+        for line in fh:
+            line = line.strip()
+            if line != '' and not line.startswith(('#', 'svn+', 'git+')):
+                requirements.append(line)
+    return requirements
 
 
 setup(
     name='uwhoisd',
-    version=META['version'],
+    version='0.0.5',
     description="Universal domain WHOIS proxy server.",
     long_description=read('README') + "\n\n" + read("ChangeLog"),
     url='https://github.com/kgaughan/uwhoisd/',
@@ -35,6 +53,6 @@ setup(
         'Topic :: System :: Networking',
     ),
 
-    author=META['author'],
-    author_email=META['email'],
+    author='Keith Gaughan',
+    author_email='k@stereochro.me',
 )

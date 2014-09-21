@@ -12,11 +12,6 @@ import sys
 from uwhoisd import net, utils
 
 
-__version__ = '0.0.5'
-__author__ = 'Keith Gaughan'
-__email__ = 'k@stereochro.me'
-
-
 USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname('whois', 'tcp')

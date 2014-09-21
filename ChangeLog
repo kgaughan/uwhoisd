@@ -6,9 +6,8 @@ Change history
 
 .. _version-0.0.5:
 
-0.0.5
-=====
-:By: Keith Gaughan
+0.0.5 (2014-10-21)
+==================
 
 * Trap client connection closure.
 * Trap DNS resolution errors for downstream servers.
@@ -19,13 +18,12 @@ Change history
 * IANA root zone database scraper.
 * Scraped WHOIS servers associated with zones in the IANA database.
 * Added details for a number of WHOIS servers not listed in IANA's database.
+* All the new gTLDs!
 
 .. _version-0.0.4:
 
-0.0.4
-=====
-:Release date: 2012-09-02T11:33:00.Z
-:By: Keith Gaughan
+0.0.4 (2012-09-02)
+==================
 
 * Initial revision with a change log.
 
