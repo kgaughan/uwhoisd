@@ -6,7 +6,7 @@ Change history
 
 .. _version-0.0.5:
 
-0.0.5 (2014-10-21)
+0.0.5 (2014-09-21)
 ==================
 
 * Trap client connection closure.
