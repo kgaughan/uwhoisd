@@ -2,6 +2,8 @@
 A scraper which pulls zone WHOIS servers from IANA's root zone database.
 """
 
+import logging
+import socket
 import sys
 import time
 import urlparse
@@ -20,6 +22,7 @@ def main():
     """
     print '[overrides]'
 
+    logging.info("Scraping %s", ROOT_ZONE_DB)
     scraper = beautifulscraper.BeautifulScraper()
     body = scraper.go(ROOT_ZONE_DB)
 
@@ -46,9 +49,20 @@ def main():
         if whois_server_label is not None:
             whois_server = whois_server_label.next_sibling.strip().lower()
 
+        # Fallback to trying whois.nic.*
         if whois_server == '':
+            whois_server = 'whois.nic.%s' % ace_zone
+            logging.info("Trying %s", whois_server)
+            try:
+                socket.gethostbyname(whois_server)
+            except socket.gaierror:
+                whois_server = ''
+
+        if whois_server == '':
+            logging.info("No WHOIS server found for %s", ace_zone)
             no_server.append(ace_zone)
         else:
+            logging.info("WHOIS server for %s is %s", ace_zone, whois_server)
             print '%s=%s' % (ace_zone, whois_server)
 
     for ace_zone in no_server:

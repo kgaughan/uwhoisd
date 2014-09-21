@@ -14,6 +14,5 @@ It is only intended for use with domain names currently, but could be
 generalised to work with other types of WHOIS server.
 
 The daemon comes with a scraper to pull WHOIS server information from IANA's
-root zone database in the module `uwhoisd.scraper`. This requires the
-`beautifulscraper <https://pypi.python.org/pypi/beautifulscraper>`_ package to
-run.
+root zone database at `tools/scraper.py`. This requires the `beautifulscraper
+<https://pypi.python.org/pypi/beautifulscraper>`_ package to run.
