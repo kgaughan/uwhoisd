@@ -116,6 +116,17 @@ class UWhois(object):
         """
         return self.prefixes[zone] if zone in self.prefixes else ''
 
+    def _thin_query(self, server_index, response, port, query):
+        server = self.get_registrar_whois_server(server_index, response)
+        if server is not None:
+            if not self.registry_whois:
+                response = ""
+            with net.WhoisClient(server, port) as client:
+                logger.info(
+                    "Recursive query to %s about %s",
+                    server, query)
+                response += client.whois(query)
+
     def whois(self, query):
         """
         Query the appropriate WHOIS server.
@@ -125,26 +136,25 @@ class UWhois(object):
             if query.endswith('.' + zone):
                 break
         else:
-            _, zone = utils.split_fqdn(query)
+            if query.split('.')[-1].isdigit():
+                zone = query.split('.')[0]
+            else:
+                _, zone = utils.split_fqdn(query)
 
         # Query the registry's WHOIS server.
         server, port = self.get_whois_server(zone)
         with net.WhoisClient(server, port) as client:
             logger.info("Querying %s about %s", server, query)
-            response = client.whois(self.get_prefix(zone) + query)
+            prefix = self.get_prefix(zone)
+            if len(prefix) == 0:
+                prefix = self.get_prefix(server)
+            response = client.whois(prefix + query)
 
         # Thin registry? Query the registrar's WHOIS server.
         if zone in self.recursion_patterns:
-            server = self.get_registrar_whois_server(zone, response)
-            if server is not None:
-                if not self.registry_whois:
-                    response = ""
-                with net.WhoisClient(server, port) as client:
-                    logger.info(
-                        "Recursive query to %s about %s",
-                        server, query)
-                    response += client.whois(query)
-
+            self._thin_query(zone, response, port, query)
+        elif server in self.recursion_patterns:
+            self._thin_query(server, response, port, query)
         return response
 
 
