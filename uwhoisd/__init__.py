@@ -126,6 +126,7 @@ class UWhois(object):
                     "Recursive query to %s about %s",
                     server, query)
                 response += client.whois(query)
+        return response
 
     def whois(self, query):
         """
@@ -152,9 +153,9 @@ class UWhois(object):
 
         # Thin registry? Query the registrar's WHOIS server.
         if zone in self.recursion_patterns:
-            self._thin_query(zone, response, port, query)
+            response = self._thin_query(zone, response, port, query)
         elif server in self.recursion_patterns:
-            self._thin_query(server, response, port, query)
+            response = self._thin_query(server, response, port, query)
         return response
 
 
