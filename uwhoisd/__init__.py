@@ -139,6 +139,8 @@ class UWhois(object):
         else:
             if query.split('.')[-1].isdigit():
                 zone = query.split('.')[0]
+            elif ':' in query:
+                zone = 'ipv6'
             else:
                 _, zone = utils.split_fqdn(query)
 

@@ -60,7 +60,7 @@ def respond(whois, addr):
     Respond to a single request.
     """
     query = diesel.until_eol().rstrip(CRLF).lower()
-    if not utils.is_well_formed_fqdn(query):
+    if not utils.is_well_formed_fqdn(query) and ':' not in query:
         diesel.send("; Bad request: '%s'\r\n" % query)
         return
 
