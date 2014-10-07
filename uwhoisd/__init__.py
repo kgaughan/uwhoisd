@@ -203,6 +203,8 @@ def main():
                 if response is None:
                     response = uwhois.whois(query)
                     redis_cache.setex(query, redis_expire, response)
+                else:
+                    logger.info("Redis cache hit for %s", query)
                 return response
         else:
             logger.info("Caching deactivated")
