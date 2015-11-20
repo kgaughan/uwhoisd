@@ -20,6 +20,8 @@ def main():
     Scrape IANA's root zone database and write the resulting configuration
     data to stdout.
     """
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+
     print '[overrides]'
 
     logging.info("Scraping %s", ROOT_ZONE_DB)
@@ -34,13 +36,16 @@ def main():
         time.sleep(SLEEP)
 
         zone_url = urlparse.urljoin(ROOT_ZONE_DB, link.attrs['href'])
+        logging.info("Scraping %s", zone_url)
         body = scraper.go(zone_url)
 
         title = body.find('h1')
         if title is None:
+            logging.info("No title found")
             continue
         title_parts = ''.join(title.strings).split('.', 1)
         if len(title_parts) != 2:
+            logging.info("Could not find TLD in '%s'", title)
             continue
         ace_zone = title_parts[1].encode('idna').lower()
 
@@ -52,7 +57,7 @@ def main():
         # Fallback to trying whois.nic.*
         if whois_server == '':
             whois_server = 'whois.nic.%s' % ace_zone
-            logging.info("Trying %s", whois_server)
+            logging.info("Trying fallback server: %s", whois_server)
             try:
                 socket.gethostbyname(whois_server)
             except socket.gaierror:
@@ -67,6 +72,8 @@ def main():
 
     for ace_zone in no_server:
         print '; No record for %s' % ace_zone
+
+    logging.info("Done")
 
     return 0
 
