@@ -4,6 +4,10 @@ Utilities.
 
 import collections
 import contextlib
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 import ConfigParser
 import re
 import StringIO
@@ -19,7 +23,7 @@ def make_config_parser(defaults=None, config_path=None):
     """
     Creates a config parser.
     """
-    parser = ConfigParser.SafeConfigParser()
+    parser = configparser.SafeConfigParser()
     if defaults is not None:
         with contextlib.closing(StringIO.StringIO(defaults)) as fp:
             parser.readfp(fp)

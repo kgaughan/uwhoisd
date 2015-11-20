@@ -49,7 +49,7 @@ class WhoisClient(diesel.Client):
                 if evt == 'sleep':
                     raise Timeout(self.addr)
                 result.append(data)
-        except diesel.ConnectionClosed, ex:
+        except diesel.ConnectionClosed as ex:
             if ex.buffer:
                 result.append(ex.buffer)
         return ''.join(result)
@@ -71,10 +71,10 @@ def respond(whois, addr):
         diesel.send("; Connection refused by downstream server\r\n")
     except diesel.ConnectionClosed:
         logger.info("Connection closed by %s", addr)
-    except Timeout, ex:
+    except Timeout as ex:
         logger.info("Slow response")
         diesel.send("; Slow response from %s.\r\n" % ex.server)
-    except diesel.DNSResolutionError, ex:
+    except diesel.DNSResolutionError as ex:
         logger.error("%s", ex.message)
         diesel.send("; %s\n\n" % ex.message)
 

@@ -188,7 +188,7 @@ def main():
         else:
             logger.info("Caching deactivated")
             whois = uwhois.whois
-    except Exception, ex:  # pylint: disable-msg=W0703
+    except Exception as ex:  # pylint: disable-msg=W0703
         print >> sys.stderr, "Could not parse config file: %s" % str(ex)
         return 1
 
