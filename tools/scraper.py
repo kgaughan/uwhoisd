@@ -39,7 +39,7 @@ def main():
         title = body.find('h1')
         if title is None:
             continue
-        title_parts = title.string.split('.', 1)
+        title_parts = ''.join(title.strings).split('.', 1)
         if len(title_parts) != 2:
             continue
         ace_zone = title_parts[1].encode('idna').lower()
