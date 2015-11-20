@@ -3,9 +3,6 @@ sudo: false
 python:
   - "2.6"
   - "2.7"
-  - "3.2"
-  - "3.4"
-  - "3.5"
 install:
   # Hack to work around brokenness in the pyev package.
   - pip install .
