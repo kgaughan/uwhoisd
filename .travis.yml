@@ -4,6 +4,6 @@ python:
   - "2.7"
 install:
   # Hack to work around brokenness in the pyev package.
-  - pip install . || chmod +x $HOME/virtualenv/python2.?/build/pyev/src/libev/configure && pip install .
+  - pip install .
 script:
   - nosetests
