@@ -21,6 +21,7 @@ CONFIG = """
 iface=0.0.0.0
 port=4343
 registry_whois=false
+page_feed=true
 suffix=whois-servers.net
 
 [overrides]
@@ -44,6 +45,7 @@ class UWhois(object):
         'prefixes',
         'recursion_patterns',
         'registry_whois',
+        'page_feed',
         'suffix',
     )
 
@@ -54,6 +56,7 @@ class UWhois(object):
         self.prefixes = {}
         self.recursion_patterns = {}
         self.registry_whois = False
+        self.page_feed = True
         self.conservative = ()
 
     def _get_dict(self, parser, section):
@@ -74,6 +77,8 @@ class UWhois(object):
         """
         self.registry_whois = utils.to_bool(
             parser.get('uwhoisd', 'registry_whois'))
+        self.page_feed = utils.to_bool(
+            parser.get('uwhoisd', 'page_feed'))
         self.suffix = parser.get('uwhoisd', 'suffix')
         self.conservative = [
             zone
@@ -139,6 +144,9 @@ class UWhois(object):
             if server is not None:
                 if not self.registry_whois:
                     response = ""
+                elif self.page_feed:
+                    # A form feed character so it's possible to find the split.
+                    respond += "\f"
                 with net.WhoisClient(server, port) as client:
                     logger.info(
                         "Recursive query to %s about %s",
