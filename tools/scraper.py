@@ -33,6 +33,13 @@ def main():
         if 'href' not in link.attrs:
             continue
 
+        # Is this a zone we should skip/ignore?
+        row = link.parent.parent.parent.findChildren('td')
+        if row[1].string == 'test':
+            continue
+        if row[2].string in ('Not assigned', 'Retired'):
+            continue
+
         time.sleep(SLEEP)
 
         zone_url = urlparse.urljoin(ROOT_ZONE_DB, link.attrs['href'])
