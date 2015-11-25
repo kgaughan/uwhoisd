@@ -27,7 +27,7 @@ def read_requirements(requirements_path):
 
 setup(
     name='uwhoisd',
-    version='0.0.5',
+    version='0.0.6',
     description="Universal domain WHOIS proxy server.",
     long_description=read('README') + "\n\n" + read("ChangeLog"),
     url='https://github.com/kgaughan/uwhoisd/',

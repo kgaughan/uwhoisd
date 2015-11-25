@@ -4,6 +4,16 @@
 Change history
 ==============
 
+.. _version-0.0.6:
+
+0.0.6 (2015-11-25)
+==================
+
+* IANA scraper improvements.
+* Option to insert page feed to separate registry and registrar WHOIS.
+* Some tentative Python 3 improvements (Diesel is a blocker).
+* Latest server list from IANA.
+
 .. _version-0.0.5:
 
 0.0.5 (2014-09-21)
