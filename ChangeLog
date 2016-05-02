@@ -4,6 +4,17 @@
 Change history
 ==============
 
+.. _version-0.0.7:
+
+0.0.7 (2016-05-01)
+==================
+
+* Update server list from IANA.
+* Fix a bug affecting the thin WHOIS code, where the registry WHOIS is kept.
+* Recursion patterns for .jobs
+* Prep for ENUM and .arpa support.
+* First release as a wheel.
+
 .. _version-0.0.6:
 
 0.0.6 (2015-11-25)

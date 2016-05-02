@@ -14,27 +14,23 @@ def read(filename):
         return fh.read()
 
 
-def read_requirements(requirements_path):
-    """Read a requirements file, stripping out the detritus."""
-    requirements = []
-    with open(requirements_path, 'r') as fh:
-        for line in fh:
-            line = line.strip()
-            if line != '' and not line.startswith(('#', 'svn+', 'git+')):
-                requirements.append(line)
-    return requirements
-
-
 setup(
     name='uwhoisd',
-    version='0.0.6',
+    version='0.0.7',
     description="Universal domain WHOIS proxy server.",
     long_description=read('README') + "\n\n" + read("ChangeLog"),
     url='https://github.com/kgaughan/uwhoisd/',
     license='MIT',
-    packages=find_packages(exclude='tests'),
+    packages=find_packages(exclude=['tests']),
     zip_safe=True,
-    install_requires=read_requirements('requirements.txt'),
+
+    setup_requires=[
+        'setuptools',
+        'wheel',
+    ],
+    install_requires=[
+        'diesel>=2.1.1',
+    ],
 
     entry_points={
         'console_scripts': (
