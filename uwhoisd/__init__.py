@@ -146,7 +146,7 @@ class UWhois(object):
                     response = ""
                 elif self.page_feed:
                     # A form feed character so it's possible to find the split.
-                    respond += "\f"
+                    response += "\f"
                 with net.WhoisClient(server, port) as client:
                     logger.info(
                         "Recursive query to %s about %s",
