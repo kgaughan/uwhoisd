@@ -23,6 +23,7 @@ pip-log.txt
 .coverage
 .tox
 /cover
+/.env
 
 # General detritus
 *~
