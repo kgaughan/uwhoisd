@@ -176,8 +176,10 @@ def main():
 
         uwhois = UWhois()
         uwhois.read_config(parser)
+        cache = utils.to_bool(parser.get('cache', 'enable'))
+        redis_cache = utils.to_bool(parser.get('redis_cache', 'enable'))
 
-        if parser.has_section('cache'):
+        if cache:
             logger.info("Caching activated")
             cache = utils.Cache(
                 max_size=parser.getint('cache', 'max_size'),
@@ -192,6 +194,25 @@ def main():
                 else:
                     response = uwhois.whois(query)
                     cache[query] = response
+                return response
+        elif redis_cache:
+            logger.info("Redis caching activated")
+            import redis
+            redis_host = parser.get('redis_cache', 'host')
+            redis_port = parser.getint('redis_cache', 'port')
+            redis_database = parser.getint('redis_cache', 'db')
+            redis_expire = parser.getint('redis_cache', 'expire')
+            redis_cache = redis.StrictRedis(redis_host, redis_port,
+                                            redis_database)
+
+            def whois(query):
+                """Redis caching wrapper around UWhois."""
+                response = redis_cache.get(query)
+                if response is None:
+                    response = uwhois.whois(query)
+                    redis_cache.setex(query, redis_expire, response)
+                else:
+                    logger.info("Redis cache hit for %s", query)
                 return response
         else:
             logger.info("Caching deactivated")
