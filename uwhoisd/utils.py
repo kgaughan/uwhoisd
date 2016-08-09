@@ -32,7 +32,18 @@ def make_config_parser(defaults=None, config_path=None):
 
 def is_well_formed_fqdn(fqdn):
     """
-    Check if a string looks like a well formed FQDN.
+    Check if a string looks like a well formed FQDN without a trailing dot.
+
+    >>> is_well_formed_fqdn('stereochro.me')
+    True
+    >>> is_well_formed_fqdn('stereochro.me.')
+    False
+    >>> is_well_formed_fqdn('stereochrome')
+    False
+    >>> is_well_formed_fqdn('stereochrome.')
+    False
+    >>> is_well_formed_fqdn('keithgaughan.co.uk')
+    True
     """
     return FQDN_PATTERN.match(fqdn) is not None
 
