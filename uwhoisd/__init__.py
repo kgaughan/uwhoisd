@@ -16,7 +16,7 @@ USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname('whois', 'tcp')
 
-CONFIG = """
+CONFIG = u"""
 [uwhoisd]
 iface=0.0.0.0
 port=4343

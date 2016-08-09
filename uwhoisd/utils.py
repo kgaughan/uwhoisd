@@ -8,9 +8,8 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-import ConfigParser
+import io
 import re
-import StringIO
 import time
 
 
@@ -25,7 +24,7 @@ def make_config_parser(defaults=None, config_path=None):
     """
     parser = configparser.SafeConfigParser()
     if defaults is not None:
-        with contextlib.closing(StringIO.StringIO(defaults)) as fp:
+        with contextlib.closing(io.StringIO(defaults)) as fp:
             parser.readfp(fp)
     if config_path is not None:
         parser.read(config_path)
