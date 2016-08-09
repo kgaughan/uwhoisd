@@ -1,4 +1,4 @@
-from uwhoisd.utils import Cache
+from uwhoisd.caching import Cache
 
 
 def test_insertion():

@@ -9,7 +9,7 @@ import re
 import socket
 import sys
 
-from uwhoisd import net, utils
+from uwhoisd import caching, net, utils
 
 
 USAGE = "Usage: %s <config>"
@@ -179,7 +179,7 @@ def main():
 
         if parser.has_section('cache'):
             logger.info("Caching activated")
-            cache = utils.Cache(
+            cache = caching.Cache(
                 max_size=parser.getint('cache', 'max_size'),
                 max_age=parser.getint('cache', 'max_age'))
 
