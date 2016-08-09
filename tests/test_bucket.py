@@ -1,6 +1,6 @@
 import pickle
 
-from uwhoisd.utils import TokenBucket
+from uwhoisd.rl import TokenBucket
 
 
 def test_creation():
