@@ -7,15 +7,16 @@ class TokenBucket(object):
     """
 
     __slots__ = (
-        'clock',
         'ts',
         'rate',
         'limit',
         '_available',
     )
 
-    def __init__(self, rate, limit, clock=time.time):
-        self.clock = clock
+    clock = staticmethod(time.time)
+
+    def __init__(self, rate, limit):
+        super(TokenBucket, self).__init__()
         self.ts = self.clock()
         self.rate = rate
         self.limit = limit

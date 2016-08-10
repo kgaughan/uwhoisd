@@ -1,65 +1,69 @@
 import pickle
 
-from uwhoisd.rl import TokenBucket
+from uwhoisd import rl
+from . import utils
+
+
+class TokenBucket(rl.TokenBucket):
+    """
+    A token bucket with a fake clock.
+    """
+
+    def __init__(self, rate, limit, clock=None):
+        self.clock = utils.Clock() if clock is None else clock
+        super(TokenBucket, self).__init__(rate, limit)
 
 
 def test_creation():
-    ticks = 42
-    fake_clock = lambda: ticks
-
+    fake_clock = utils.Clock(42)
     bucket = TokenBucket(rate=23, limit=9000, clock=fake_clock)
     assert bucket.clock is fake_clock
-    assert bucket.ts == ticks
+    assert bucket.ts == 42
     assert bucket.rate == 23
     assert bucket.limit == 9000
     assert bucket._available == bucket.limit
 
 
 def test_consumption():
-    ticks = 0
-    fake_clock = lambda: ticks
-
-    bucket = TokenBucket(5, 20, clock=fake_clock)
+    bucket = TokenBucket(5, 20)
     assert bucket.tokens == 20
     assert bucket.consume(10)
     assert not bucket.consume(15)
     assert bucket.tokens == 10
 
-    ticks += 1
+    bucket.clock.ticks += 1
     assert bucket.tokens == 15
-    ticks += 2
+    bucket.clock.ticks += 2
     assert bucket.tokens == 20
 
     assert bucket.consume(1)
     assert bucket.tokens == 19
-    ticks += 1
+    bucket.clock.ticks += 1
     assert bucket.tokens == 20
 
 
 def test_comparison():
-    ticks = 0
-    fake_clock = lambda: ticks
-
-    b1 = TokenBucket(5, 20, clock=fake_clock)
-    b2 = TokenBucket(5, 20, clock=fake_clock)
+    clock = utils.Clock()
+    b1 = TokenBucket(5, 20, clock=clock)
+    b2 = TokenBucket(5, 20, clock=clock)
 
     # These comparisons check when the buckets were last *used*, not the number
     # of tokens each contains.
     assert b1 == b2
-    ticks += 1
+    clock.ticks += 1
     b1.consume(1)
     assert b2 < b1
-    ticks += 1
+    clock.ticks += 1
     b2.consume(1)
     assert b1 < b2
-    ticks += 1
+    clock.ticks += 1
     b1.consume(1)
     b2.consume(1)
     assert b1 == b2
 
 
 def test_pickle():
-    original = TokenBucket(5, 20)
+    original = rl.TokenBucket(5, 20)
     original.consume(1)
     unpickled = pickle.loads(pickle.dumps(original))
     assert unpickled is not original
