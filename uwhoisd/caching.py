@@ -3,7 +3,7 @@ import time
 
 
 # pylint: disable-msg=R0924
-class Cache(object):
+class LFU(object):
     """
     A simple LFU cache.
     """

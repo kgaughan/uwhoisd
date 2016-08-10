@@ -179,7 +179,7 @@ def main():
 
         if parser.has_section('cache'):
             logger.info("Caching activated")
-            cache = caching.Cache(
+            cache = caching.LFU(
                 max_size=parser.getint('cache', 'max_size'),
                 max_age=parser.getint('cache', 'max_age'))
 

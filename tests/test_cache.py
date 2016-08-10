@@ -1,8 +1,8 @@
-from uwhoisd.caching import Cache
+from uwhoisd.caching import LFU
 
 
 def test_insertion():
-    cache = Cache()
+    cache = LFU()
 
     assert len(cache) == 0
     assert len(cache.queue) == 0
@@ -23,7 +23,7 @@ def test_insertion():
 
 
 def test_lfu():
-    cache = Cache()
+    cache = LFU()
 
     cache['a'] = 'x'
     assert len(cache) == 1
@@ -66,7 +66,7 @@ def test_lfu():
 def test_expiration():
     time = 1
 
-    cache = Cache(max_age=5, clock=lambda: time)
+    cache = LFU(max_age=5, clock=lambda: time)
 
     # Ensure that the clock value is coming from the current value of the
     # `time` variable.
@@ -114,7 +114,7 @@ def test_expiration():
 
 
 def test_eviction():
-    cache = Cache(max_size=2, clock=lambda: 1)
+    cache = LFU(max_size=2, clock=lambda: 1)
 
     cache['a'] = 1
     cache['b'] = 2
