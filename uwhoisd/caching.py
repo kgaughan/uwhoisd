@@ -20,18 +20,19 @@ class LFU(object):
 
     __slots__ = (
         'cache',
-        'clock',
         'max_age',
         'max_size',
         'queue',
     )
 
-    def __init__(self, max_size=256, max_age=300, clock=time.time):
+    clock = staticmethod(time.time)
+
+    def __init__(self, max_size=256, max_age=300):
+        super(LFU, self).__init__()
         self.cache = {}
         self.queue = collections.deque()
         self.max_size = max_size
         self.max_age = max_age
-        self.clock = clock
 
     def evict_one(self):
         """

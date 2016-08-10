@@ -1,4 +1,12 @@
-from uwhoisd.caching import LFU
+from uwhoisd import caching
+from . import utils
+
+
+class LFU(caching.LFU):
+
+    def __init__(self, max_size=256, max_age=300):
+        self.clock = utils.Clock()
+        super(LFU, self).__init__(max_size, max_age)
 
 
 def test_insertion():
@@ -64,20 +72,18 @@ def test_lfu():
 
 
 def test_expiration():
-    time = 1
-
-    cache = LFU(max_age=5, clock=lambda: time)
+    cache = LFU(max_age=5)
 
     # Ensure that the clock value is coming from the current value of the
     # `time` variable.
-    assert cache.clock() == 1
-    time = 2
+    assert cache.clock() == 0
+    cache.clock.ticks = 2
     assert cache.clock() == 2
 
     cache['a'] = 'b'
     cache['b'] = 'c'
 
-    time += 3
+    cache.clock.ticks += 3
 
     cache['c'] = 'd'
     cache['d'] = 'e'
@@ -88,7 +94,7 @@ def test_expiration():
     assert len(cache) == 4
     assert len(cache.queue) == 4
 
-    time += 3
+    cache.clock.ticks += 3
     cache.evict_expired()
     assert len(cache) == 2
     assert len(cache.queue) == 2
@@ -101,7 +107,7 @@ def test_expiration():
     assert len(cache) == 2
     assert len(cache.queue) == 3
 
-    time += 3
+    cache.clock.ticks += 3
     cache.evict_expired()
     assert len(cache) == 1
     assert len(cache.queue) == 1
@@ -114,7 +120,8 @@ def test_expiration():
 
 
 def test_eviction():
-    cache = LFU(max_size=2, clock=lambda: 1)
+    cache = LFU(max_size=2)
+    cache.clock.ticks = 1
 
     cache['a'] = 1
     cache['b'] = 2
