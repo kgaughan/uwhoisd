@@ -24,6 +24,9 @@ registry_whois=false
 page_feed=true
 suffix=whois-servers.net
 
+[cache]
+type=null
+
 [overrides]
 
 [prefixes]
@@ -177,25 +180,8 @@ def main():
         uwhois = UWhois()
         uwhois.read_config(parser)
 
-        if parser.has_section('cache'):
-            logger.info("Caching activated")
-            cache = caching.LFU(
-                max_size=parser.getint('cache', 'max_size'),
-                max_age=parser.getint('cache', 'max_age'))
-
-            def whois(query):
-                """Caching wrapper around UWhois."""
-                cache.evict_expired()
-                if query in cache:
-                    logger.info("Cache hit for %s", query)
-                    response = cache[query]
-                else:
-                    response = uwhois.whois(query)
-                    cache[query] = response
-                return response
-        else:
-            logger.info("Caching deactivated")
-            whois = uwhois.whois
+        cache = caching.get_cache(dict(parser.items('cache')))
+        whois = caching.wrap_whois(cache, uwhois.whois)
     except Exception as ex:  # pylint: disable-msg=W0703
         print >> sys.stderr, "Could not parse config file: %s" % str(ex)
         return 1

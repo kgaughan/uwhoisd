@@ -1,5 +1,56 @@
 import collections
+import logging
 import time
+
+import pkg_resources
+
+
+logger = logging.getLogger('uwhoisd')
+
+
+class UnknownCache(Exception):
+    """
+    The supplied cache type name cannot be found.
+    """
+
+
+def get_cache(cfg):
+    """
+    Attempt to load the configured cache.
+    """
+    cache_name = cfg.pop('type', 'null')
+    if cache_name == 'null':
+        logger.info("Caching deactivated")
+        return None
+    for ep in pkg_resources.iter_entry_points('uwhoisd.cache'):
+        if ep.name == cache_name:
+            logger.info("Using cache '%s' with the parameters %r",
+                        cache_name, cfg)
+            cache_type = ep.load()
+            return cache_type(**cfg)
+    raise UnknownCache(cache_name)
+
+
+def wrap_whois(cache, whois_func):
+    """
+    Wrap a WHOIS query function with a cache.
+    """
+    if cache is None:
+        return whois_func
+
+    def wrapped(query):
+        """
+        Caching wrapper around whois callable.
+        """
+        cache.evict_expired()
+        if query in cache:
+            logger.info("Cache hit for %s", query)
+            response = cache[query]
+        else:
+            response = whois_func(query)
+            cache[query] = response
+        return response
+    return wrapped
 
 
 # pylint: disable-msg=R0924
@@ -31,8 +82,8 @@ class LFU(object):
         super(LFU, self).__init__()
         self.cache = {}
         self.queue = collections.deque()
-        self.max_size = max_size
-        self.max_age = max_age
+        self.max_size = int(max_size)
+        self.max_age = int(max_age)
 
     def evict_one(self):
         """

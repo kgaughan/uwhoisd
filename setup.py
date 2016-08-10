@@ -36,6 +36,9 @@ setup(
         'console_scripts': (
             'uwhoisd = uwhoisd:main',
         ),
+        'uwhoisd.cache': (
+            'lfu = uwhoisd.caching:LFU',
+        ),
     },
 
     classifiers=(
