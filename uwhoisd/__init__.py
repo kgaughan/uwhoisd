@@ -183,7 +183,7 @@ def main():
         cache = caching.get_cache(dict(parser.items('cache')))
         whois = caching.wrap_whois(cache, uwhois.whois)
     except Exception as ex:  # pylint: disable-msg=W0703
-        print >> sys.stderr, "Could not parse config file: %s" % str(ex)
+        print >> sys.stderr, "Could not parse config file: %r" % (ex,)
         return 1
 
     net.start_service(iface, port, whois)
