@@ -7,7 +7,9 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
+import glob
 import io
+import os.path
 import re
 import time
 
@@ -22,11 +24,18 @@ def make_config_parser(defaults=None, config_path=None):
     Creates a config parser.
     """
     parser = configparser.SafeConfigParser()
+
     if defaults is not None:
         with contextlib.closing(io.StringIO(defaults)) as fp:
             parser.readfp(fp)
+
     if config_path is not None:
         parser.read(config_path)
+        if parser.has_option('include', 'path'):
+            glob_path = os.path.join(os.path.dirname(config_path),
+                                     parser.get('include', 'path'))
+            parser.read(glob.glob(glob_path))
+
     return parser
 
 
