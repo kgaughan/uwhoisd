@@ -42,13 +42,12 @@ def wrap_whois(cache, whois_func):
         """
         Caching wrapper around whois callable.
         """
-        cache.evict_expired()
-        if query in cache:
-            logger.info("Cache hit for %s", query)
-            response = cache[query]
-        else:
+        response = cache.get(query)
+        if response is None:
             response = whois_func(query)
-            cache[query] = response
+            cache.set(query, response)
+        else:
+            logger.info("Cache hit for '%s'", query)
         return response
     return wrapped
 
@@ -115,21 +114,18 @@ class LFU(object):
                 break
             self.attempt_eviction(key)
 
-    def __len__(self):
-        return len(self.cache)
-
-    def __contains__(self, key):
-        return key in self.cache
-
-    def __getitem__(self, key):
+    def get(self, key):
+        """
+        """
+        self.evict_expired()
         if key not in self.cache:
-            raise IndexError
+            return None
         _, value = self.cache[key]
-        # Force this onto the top of the heap.
-        self[key] = value
+        # Force this onto the top of the queue.
+        self.set(key, value)
         return value
 
-    def __setitem__(self, key, value):
+    def set(self, key, value):
         if len(self.queue) == self.max_size:
             self.evict_one()
         if key in self.cache:

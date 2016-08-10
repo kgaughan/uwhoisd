@@ -12,20 +12,20 @@ class LFU(caching.LFU):
 def test_insertion():
     cache = LFU()
 
-    assert len(cache) == 0
+    assert len(cache.cache) == 0
     assert len(cache.queue) == 0
 
-    cache['a'] = 'x'
-    assert len(cache) == 1
+    cache.set('a', 'x')
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 1
     assert cache.cache['a'] == (1, 'x')
 
-    cache['b'] = 'y'
-    assert len(cache) == 2
+    cache.set('b', 'y')
+    assert len(cache.cache) == 2
     assert len(cache.queue) == 2
 
-    cache['a'] = 'z'
-    assert len(cache) == 2
+    cache.set('a', 'z')
+    assert len(cache.cache) == 2
     assert len(cache.queue) == 3
     assert cache.cache['a'] == (2, 'z')
 
@@ -33,40 +33,40 @@ def test_insertion():
 def test_lfu():
     cache = LFU()
 
-    cache['a'] = 'x'
-    assert len(cache) == 1
+    cache.set('a', 'x')
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 1
 
-    _ = cache['a']
-    assert len(cache) == 1
+    _ = cache.get('a')
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 2
     assert cache.cache['a'] == (2, 'x')
 
-    _ = cache['a']
-    assert len(cache) == 1
+    _ = cache.get('a')
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 3
     assert cache.cache['a'] == (3, 'x')
 
     cache.evict_one()
-    assert len(cache) == 1
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 2
     assert cache.cache['a'] == (2, 'x')
 
     cache.evict_one()
-    assert len(cache) == 1
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 1
     assert cache.cache['a'] == (1, 'x')
 
     cache.evict_one()
-    assert len(cache) == 0
+    assert len(cache.cache) == 0
     assert len(cache.queue) == 0
 
-    cache['a'] = 'x'
-    assert len(cache) == 1
+    cache.set('a', 'x')
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 1
 
-    cache['a'] = 'y'
-    assert len(cache) == 1
+    cache.set('a', 'y')
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 2
     assert cache.cache['a'] == (2, 'y')
 
@@ -80,55 +80,51 @@ def test_expiration():
     cache.clock.ticks = 2
     assert cache.clock() == 2
 
-    cache['a'] = 'b'
-    cache['b'] = 'c'
+    cache.set('a', 'b')
+    cache.set('b', 'c')
 
     cache.clock.ticks += 3
 
-    cache['c'] = 'd'
-    cache['d'] = 'e'
+    cache.set('c', 'd')
+    cache.set('d', 'e')
 
-    assert len(cache) == 4
+    assert len(cache.cache) == 4
     assert len(cache.queue) == 4
     cache.evict_expired()
-    assert len(cache) == 4
+    assert len(cache.cache) == 4
     assert len(cache.queue) == 4
 
     cache.clock.ticks += 3
     cache.evict_expired()
-    assert len(cache) == 2
+    assert len(cache.cache) == 2
     assert len(cache.queue) == 2
-    assert 'a' not in cache
-    assert 'b' not in cache
-    assert 'c' in cache
-    assert 'd' in cache
+    assert 'a' not in cache.cache
+    assert 'b' not in cache.cache
+    assert 'c' in cache.cache
+    assert 'd' in cache.cache
 
-    cache['c'] = 'f'
-    assert len(cache) == 2
+    cache.set('c', 'f')
+    assert len(cache.cache) == 2
     assert len(cache.queue) == 3
 
     cache.clock.ticks += 3
     cache.evict_expired()
-    assert len(cache) == 1
+    assert len(cache.cache) == 1
     assert len(cache.queue) == 1
-    assert 'c' in cache
-    try:
-        _ = cache['d']
-        assert False, "'d' should not be in cache"
-    except IndexError:
-        pass
+    assert 'c' in cache.cache
+    assert cache.get('d') is None
 
 
 def test_eviction():
     cache = LFU(max_size=2)
     cache.clock.ticks = 1
 
-    cache['a'] = 1
-    cache['b'] = 2
-    assert len(cache) == 2
+    cache.set('a', 1)
+    cache.set('b', 2)
+    assert len(cache.cache) == 2
     assert len(cache.queue) == 2
 
-    cache['c'] = 3
-    assert len(cache) == 2
+    cache.set('c', 3)
+    assert len(cache.cache) == 2
     assert len(cache.queue) == 2
     assert sorted(cache.cache.keys()) == ['b', 'c']
