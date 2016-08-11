@@ -165,7 +165,7 @@ def main():
 
         cache = caching.get_cache(dict(parser.items('cache')))
         whois = caching.wrap_whois(cache, uwhois.whois)
-    except Exception as ex:  # pylint: disable-msg=W0703
+    except:  # pylint: disable-msg=W0703
         logger.exception("Could not parse config file")
         return 1
     else:
