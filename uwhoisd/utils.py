@@ -82,6 +82,14 @@ def is_well_formed_fqdn(fqdn):
     False
     >>> is_well_formed_fqdn('keithgaughan.co.uk')
     True
+    >>> is_well_formed_fqdn('')
+    False
+    >>> is_well_formed_fqdn('.')
+    False
+    >>> is_well_formed_fqdn('x' * 64 + '.foo')
+    False
+    >>> is_well_formed_fqdn('foo.' + 'x' * 64)
+    False
     """
     return FQDN_PATTERN.match(fqdn) is not None
 
