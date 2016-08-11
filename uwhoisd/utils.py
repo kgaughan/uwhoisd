@@ -19,11 +19,40 @@ import time
 FQDN_PATTERN = re.compile(r'^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$')
 
 
+class ConfigParser(configparser.SafeConfigParser):
+
+    def get_bool(self, section, option):
+        """
+        Get a configuration option as a boolean.
+        """
+        return self.get(section, option).lower() in ('1', 'true', 'yes', 'on')
+
+    def get_list(self, section, option):
+        """
+        Split the lines of a configuration option value into a list.
+        """
+        lines = []
+        for line in self.get(section, option).split("\n"):
+            line = line.strip()
+            if line != '':
+                lines.append(line)
+        return lines
+
+    def get_section_dict(self, section):
+        """
+        Pull a section out of the config as a dictionary safely.
+        """
+        if self.has_section(section):
+            return dict((key, decode_value(value))
+                        for key, value in self.items(section))
+        return {}
+
+
 def make_config_parser(defaults=None, config_path=None):
     """
     Creates a config parser.
     """
-    parser = configparser.SafeConfigParser()
+    parser = ConfigParser()
 
     if defaults is not None:
         with contextlib.closing(io.StringIO(defaults)) as fp:
@@ -71,13 +100,6 @@ def split_fqdn(fqdn):
     ['keithgaughan', 'co.uk']
     """
     return fqdn.rstrip('.').split('.', 1)
-
-
-def to_bool(s):
-    """
-    Converts the given string to a boolean.
-    """
-    return s.lower() in ('1', 'true', 'yes', 'on')
 
 
 def decode_value(s):

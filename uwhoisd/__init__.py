@@ -62,34 +62,17 @@ class UWhois(object):
         self.page_feed = True
         self.conservative = ()
 
-    def _get_dict(self, parser, section):
-        """
-        Pull a dictionary out of the config safely.
-        """
-        if parser.has_section(section):
-            values = dict(
-                (key, utils.decode_value(value))
-                for key, value in parser.items(section))
-        else:
-            values = {}
-        setattr(self, section, values)
-
     def read_config(self, parser):
         """
         Read the configuration for this object from a config file.
         """
-        self.registry_whois = utils.to_bool(
-            parser.get('uwhoisd', 'registry_whois'))
-        self.page_feed = utils.to_bool(
-            parser.get('uwhoisd', 'page_feed'))
+        self.registry_whois = parser.get_bool('uwhoisd', 'registry_whois')
+        self.page_feed = parser.get_bool('uwhoisd', 'page_feed')
         self.suffix = parser.get('uwhoisd', 'suffix')
-        self.conservative = [
-            zone
-            for zone in parser.get('uwhoisd', 'conservative').split("\n")
-            if zone != '']
+        self.conservative = parser.get_list('uwhoisd', 'conservative')
 
         for section in ('overrides', 'prefixes'):
-            self._get_dict(parser, section)
+            setattr(self, section, parser.get_section_dict(section))
 
         for zone, pattern in parser.items('recursion_patterns'):
             self.recursion_patterns[zone] = re.compile(
