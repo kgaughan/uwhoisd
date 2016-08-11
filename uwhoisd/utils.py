@@ -13,6 +13,8 @@ import os.path
 import re
 import time
 
+import pkg_resources
+
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
@@ -48,15 +50,15 @@ class ConfigParser(configparser.SafeConfigParser):
         return {}
 
 
-def make_config_parser(defaults=None, config_path=None):
+def make_config_parser(config_path=None):
     """
     Creates a config parser.
     """
     parser = ConfigParser()
 
-    if defaults is not None:
-        with contextlib.closing(io.StringIO(defaults)) as fp:
-            parser.readfp(fp)
+    with contextlib.closing(
+            pkg_resources.resource_stream('uwhoisd', 'defaults.ini')) as fp:
+        parser.readfp(fp)
 
     if config_path is not None:
         parser.read(config_path)

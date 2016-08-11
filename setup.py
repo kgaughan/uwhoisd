@@ -22,6 +22,7 @@ setup(
     url='https://github.com/kgaughan/uwhoisd/',
     license='MIT',
     packages=find_packages(exclude=['tests']),
+    include_package_data=True,
     zip_safe=True,
 
     setup_requires=[
