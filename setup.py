@@ -30,6 +30,7 @@ setup(
     ],
     install_requires=[
         'diesel>=2.1.1',
+        'netaddr==0.7.18',
     ],
 
     entry_points={
