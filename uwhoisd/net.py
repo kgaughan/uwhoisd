@@ -28,8 +28,7 @@ class WhoisClient(object):
         self.port = port
 
     def __enter__(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.server, self.port))
+        self.sock = socket.create_connection((self.server, self.port))
         return self
 
     def __exit__(self, type, value, traceback):
@@ -53,7 +52,7 @@ class WhoisClient(object):
         except ConnectionError as e:
             # Catches all Connection*Error exceptions
             return '{0}: {0}\n'.format(self.server, e)
-        except Exception as e:
+        except Exception:
             logger.exception("Unknown exception when querying '%s'", query)
         return to_return
 
@@ -75,10 +74,10 @@ class WhoisListener(TCPServer):
             else:
                 whois_entry = self.whois(whois_query)
             yield self.stream.write(whois_entry.encode())
-        except tornado.iostream.StreamClosedError as e:
-            logger.warning('Connection closed by client {0}.'.format(address))
-        except Exception as e:
-            logger.exception(e)
+        except tornado.iostream.StreamClosedError:
+            logger.warning('Connection closed by %s.', address)
+        except Exception:
+            logger.exception("Unknown exception by '%s'", address)
         self.stream.close()
 
 
