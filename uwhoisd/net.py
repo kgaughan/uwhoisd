@@ -39,7 +39,7 @@ class WhoisClient(object):
         to_return = ''
         try:
             bytes_whois = b''
-            self.sock.sendall('{}\n'.format(query).encode())
+            self.sock.sendall('{0}\n'.format(query).encode())
             while True:
                 data = self.sock.recv(2048)
                 if data:
@@ -49,12 +49,12 @@ class WhoisClient(object):
             to_return = str(bytes_whois, 'utf-8', 'ignore')
         except OSError as e:
             # Catches all socket.* exceptions
-            return '{}: {}\n'.format(self.server, e)
+            return '{0}: {0}\n'.format(self.server, e)
         except ConnectionError as e:
             # Catches all Connection*Error exceptions
-            return '{}: {}\n'.format(self.server, e)
+            return '{0}: {0}\n'.format(self.server, e)
         except Exception as e:
-            logger.exception(e)
+            logger.exception("Unknown exception when querying '%s'", query)
         return to_return
 
 
@@ -71,12 +71,12 @@ class WhoisListener(TCPServer):
             whois_query = yield self.stream.read_until_regex(b'\s')
             whois_query = whois_query.decode().strip().lower()
             if not utils.is_well_formed_fqdn(whois_query) and ':' not in whois_query:
-                whois_entry = "; Bad request: '{}'\r\n".format(whois_query)
+                whois_entry = "; Bad request: '{0}'\r\n".format(whois_query)
             else:
                 whois_entry = self.whois(whois_query)
             yield self.stream.write(whois_entry.encode())
         except tornado.iostream.StreamClosedError as e:
-            logger.warning('Connexion closed by client {}.'.format(address))
+            logger.warning('Connection closed by client {0}.'.format(address))
         except Exception as e:
             logger.exception(e)
         self.stream.close()
