@@ -12,7 +12,7 @@ import io
 import os.path
 import re
 import time
-
+import sys
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
@@ -128,9 +128,16 @@ def decode_value(s):
         ...
     ValueError: The trailing quote be present and match the leading quote.
     """
+    if sys.version_info < (3, 0):
+        escape = 'string_escape'
+    else:
+        escape = 'unicode_escape'
     if len(s) > 1 and s[0] in ('"', "'"):
         if s[0] != s[-1]:
             raise ValueError(
                 "The trailing quote be present and match the leading quote.")
-        return s[1:-1].decode('string_escape')
+        if isinstance(s, str):
+            s = s[1:-1]
+        else:
+            s = s[1:-1].decode(escape)
     return s
