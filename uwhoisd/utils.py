@@ -14,6 +14,9 @@ import re
 import time
 import sys
 
+import pkg_resources
+
+
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
 FQDN_PATTERN = re.compile(r'^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$')
@@ -48,15 +51,15 @@ class ConfigParser(configparser.SafeConfigParser):
         return {}
 
 
-def make_config_parser(defaults=None, config_path=None):
+def make_config_parser(config_path=None):
     """
     Creates a config parser.
     """
     parser = ConfigParser()
 
-    if defaults is not None:
-        with contextlib.closing(io.StringIO(defaults)) as fp:
-            parser.readfp(fp)
+    with contextlib.closing(
+            pkg_resources.resource_stream('uwhoisd', 'defaults.ini')) as fp:
+        parser.readfp(fp)
 
     if config_path is not None:
         parser.read(config_path)
@@ -82,6 +85,14 @@ def is_well_formed_fqdn(fqdn):
     False
     >>> is_well_formed_fqdn('keithgaughan.co.uk')
     True
+    >>> is_well_formed_fqdn('')
+    False
+    >>> is_well_formed_fqdn('.')
+    False
+    >>> is_well_formed_fqdn('x' * 64 + '.foo')
+    False
+    >>> is_well_formed_fqdn('foo.' + 'x' * 64)
+    False
     """
     return FQDN_PATTERN.match(fqdn) is not None
 

@@ -16,24 +16,6 @@ USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname('whois', 'tcp')
 
-CONFIG = u"""
-[uwhoisd]
-iface=0.0.0.0
-port=4343
-registry_whois=false
-page_feed=true
-suffix=whois-servers.net
-
-[cache]
-type=null
-
-[overrides]
-
-[prefixes]
-
-[recursion_patterns]
-"""
-
 logger = logging.getLogger('uwhoisd')
 
 
@@ -154,7 +136,7 @@ def main():
 
     try:
         logger.info("Reading config file at '%s'", sys.argv[1])
-        parser = utils.make_config_parser(CONFIG, sys.argv[1])
+        parser = utils.make_config_parser(sys.argv[1])
 
         iface = parser.get('uwhoisd', 'iface')
         port = parser.getint('uwhoisd', 'port')
@@ -165,7 +147,7 @@ def main():
 
         cache = caching.get_cache(dict(parser.items('cache')))
         whois = caching.wrap_whois(cache, uwhois.whois)
-    except Exception as ex:  # pylint: disable-msg=W0703
+    except:  # pylint: disable-msg=W0703
         logger.exception("Could not parse config file")
         return 1
     else:

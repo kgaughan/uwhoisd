@@ -27,7 +27,7 @@ class Clock(object):
 def create_uwhois():
     """Prepare a UWhois object for testing."""
     config = path.join(HERE, '..', 'extra', 'uwhoisd.ini')
-    parser = make_config_parser(uwhoisd.CONFIG, config)
+    parser = make_config_parser(config)
     uwhois = uwhoisd.UWhois()
     uwhois.read_config(parser)
     return uwhois
