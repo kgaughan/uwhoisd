@@ -49,9 +49,6 @@ class WhoisClient(object):
         except OSError as e:
             # Catches all socket.* exceptions
             return '{0}: {0}\n'.format(self.server, e)
-        except ConnectionError as e:
-            # Catches all Connection*Error exceptions
-            return '{0}: {0}\n'.format(self.server, e)
         except Exception:
             logger.exception("Unknown exception when querying '%s'", query)
         return to_return
