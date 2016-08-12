@@ -30,7 +30,7 @@ setup(
         'wheel',
     ],
     install_requires=[
-        'diesel>=2.1.1',
+        'tornado',
         'netaddr==0.7.18',
     ],
 
