@@ -5,6 +5,7 @@ python:
 install:
   - pip install -r requirements-test.txt
 before_script:
-  - flake8 uwhoisd tests tools setup.py
+  - flake8 uwhoisd tools
+  - flake8 --ignore=D100,D101,D102,D103,D104,D200 tests setup.py
 script:
   - py.test --doctest-modules uwhoisd tests

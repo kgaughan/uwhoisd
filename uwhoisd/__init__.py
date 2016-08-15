@@ -35,6 +35,9 @@ class UWhois(object):
     )
 
     def __init__(self):
+        """
+        Initialise the proxy.
+        """
         super(UWhois, self).__init__()
         self.suffix = None
         self.overrides = {}
@@ -85,7 +88,7 @@ class UWhois(object):
 
     def get_prefix(self, zone):
         """
-        Gets the prefix required when querying the servers for the given zone.
+        Get the prefix required when querying the servers for the given zone.
         """
         return self.prefixes[zone] if zone in self.prefixes else ''
 

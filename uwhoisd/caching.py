@@ -1,3 +1,7 @@
+"""
+Caching support.
+"""
+
 import collections
 import logging
 import time
@@ -78,6 +82,13 @@ class LFU(object):
     clock = staticmethod(time.time)
 
     def __init__(self, max_size=256, max_age=300):
+        """
+        Create a new LFU cache.
+
+        :param max_size int: Maximum number of entries the cache can contain.
+        :param max_age int:  Maximum number of seconds to consider an entry
+                             live.
+        """
         super(LFU, self).__init__()
         self.cache = {}
         self.queue = collections.deque()
@@ -116,6 +127,9 @@ class LFU(object):
 
     def get(self, key):
         """
+        Pull a value from the cache corresponding to the key.
+
+        If no value exists, `None` is returned.
         """
         self.evict_expired()
         if key not in self.cache:
@@ -126,6 +140,9 @@ class LFU(object):
         return value
 
     def set(self, key, value):
+        """
+        Add `value` to the cache, to be referenced by `key`.
+        """
         if len(self.queue) == self.max_size:
             self.evict_one()
         if key in self.cache:

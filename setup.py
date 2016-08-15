@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import os.path
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def read(filename):
