@@ -1,3 +1,7 @@
+"""
+Rate limiting.
+"""
+
 import time
 
 
@@ -16,6 +20,12 @@ class TokenBucket(object):
     clock = staticmethod(time.time)
 
     def __init__(self, rate, limit):
+        """
+        Create a new token bucket.
+
+        :param rate int: Token refill rate (per second) of bucket.
+        :param limit int: Maximum number of tokens the bucket can contain.
+        """
         super(TokenBucket, self).__init__()
         self.ts = self.clock()
         self.rate = rate
@@ -24,8 +34,9 @@ class TokenBucket(object):
 
     def consume(self, tokens):
         """
-        Attempt to remove the given number of tokens from this bucket. If
-        there are enough tokens in the bucket to fulfil the request, we
+        Attempt to remove the given number of tokens from this bucket.
+
+        If there are enough tokens in the bucket to fulfil the request, we
         return `True`, otherwise `False`.
         """
         if 0 <= tokens <= self.tokens:

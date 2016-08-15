@@ -1,0 +1,8 @@
+-e .
+
+# Testing.
+coverage
+flake8
+flake8-docstrings>=0.2.7
+flake8-import-order>=0.9
+pytest

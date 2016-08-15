@@ -20,6 +20,9 @@ FQDN_PATTERN = re.compile(r'^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$')
 
 
 class ConfigParser(configparser.SafeConfigParser):
+    """
+    Enhanced configuration parser.
+    """
 
     def get_bool(self, section, option):
         """
@@ -50,7 +53,7 @@ class ConfigParser(configparser.SafeConfigParser):
 
 def make_config_parser(config_path=None):
     """
-    Creates a config parser.
+    Create a config parser.
     """
     parser = ConfigParser()
 
@@ -96,7 +99,7 @@ def is_well_formed_fqdn(fqdn):
 
 def split_fqdn(fqdn):
     """
-    Splits an FQDN into the domain name and zone.
+    Split an FQDN into the domain name and zone.
 
     >>> split_fqdn('stereochro.me')
     ['stereochro', 'me']
@@ -111,7 +114,9 @@ def split_fqdn(fqdn):
 
 
 def decode_value(s):
-    """
+    r"""
+    Decode a quoted string.
+
     If a string is quoted, it's parsed like a python string, otherwise it's
     passed straight through as-is.
 
@@ -119,10 +124,10 @@ def decode_value(s):
     'foo'
     >>> decode_value('"foo"')
     'foo'
-    >>> decode_value('"foo\\\\nbar\"')
-    'foo\\nbar'
-    >>> decode_value('foo\\nbar')
-    'foo\\nbar'
+    >>> decode_value('"foo\\nbar"')
+    'foo\nbar'
+    >>> decode_value('foo\nbar')
+    'foo\nbar'
     >>> decode_value('"foo')
     Traceback (most recent call last):
         ...
@@ -131,7 +136,7 @@ def decode_value(s):
     Traceback (most recent call last):
         ...
     ValueError: The trailing quote be present and match the leading quote.
-    >>> decode_value("\\\"foo\\'")
+    >>> decode_value("\"foo\'")
     Traceback (most recent call last):
         ...
     ValueError: The trailing quote be present and match the leading quote.

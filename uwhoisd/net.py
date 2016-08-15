@@ -23,6 +23,9 @@ class Timeout(Exception):
     __slots__ = ('server',)
 
     def __init__(self, server):
+        """
+        :param server string: hostname of downstream server.
+        """
         super(Timeout, self).__init__()
         self.server = server
 
@@ -37,9 +40,10 @@ class WhoisClient(diesel.Client):
     @diesel.call
     def whois(self, query):
         """
-        Perform a query against the server. Either returns the server's
-        response or raises a `Timeout` exception if the downstream server
-        took too long.
+        Perform a query against the server.
+
+        Either returns the server's response or raises a `Timeout` exception if
+        the downstream server took too long.
         """
         diesel.send(query + CRLF)
         result = []

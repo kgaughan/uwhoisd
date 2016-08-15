@@ -17,8 +17,9 @@ SLEEP = 0
 
 def main():
     """
-    Scrape IANA's root zone database and write the resulting configuration
-    data to stdout.
+    Scrape IANA's root zone database.
+
+    The scraped data is written to standard output.
     """
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 

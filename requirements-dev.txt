@@ -1,8 +1,4 @@
--e .
-
-# Testing.
-coverage
-nose
+-r requirements-test.txt
 
 # Documentation.
 Sphinx
