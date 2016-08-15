@@ -1,9 +1,4 @@
--e .
-
-# Testing.
-coverage
-flake8
-pytest
+-r requirements-test.txt
 
 # Documentation.
 Sphinx
