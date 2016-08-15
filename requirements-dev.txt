@@ -2,7 +2,8 @@
 
 # Testing.
 coverage
-nose
+flake8
+pytest
 
 # Documentation.
 Sphinx
