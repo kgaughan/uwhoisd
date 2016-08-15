@@ -24,6 +24,7 @@ pip-log.txt
 .tox
 /cover
 /.env
+/.cache
 
 # General detritus
 *~

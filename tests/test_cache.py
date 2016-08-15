@@ -37,12 +37,12 @@ def test_lfu():
     assert len(cache.cache) == 1
     assert len(cache.queue) == 1
 
-    _ = cache.get('a')
+    cache.get('a')
     assert len(cache.cache) == 1
     assert len(cache.queue) == 2
     assert cache.cache['a'] == (2, 'x')
 
-    _ = cache.get('a')
+    cache.get('a')
     assert len(cache.cache) == 1
     assert len(cache.queue) == 3
     assert cache.cache['a'] == (3, 'x')

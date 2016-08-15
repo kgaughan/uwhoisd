@@ -8,10 +8,8 @@ try:
 except ImportError:
     import ConfigParser as configparser
 import glob
-import io
 import os.path
 import re
-import time
 
 import pkg_resources
 
