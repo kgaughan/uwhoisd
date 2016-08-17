@@ -6,7 +6,6 @@ import logging
 import socket
 import sys
 import time
-
 try:
     from urllib.parse import urljoin
 except ImportError:
@@ -15,26 +14,25 @@ except ImportError:
 from bs4 import BeautifulSoup
 import requests
 
+
 ROOT_ZONE_DB = 'http://www.iana.org/domains/root/db'
-SLEEP = 0
 
 
-def main():
+def fetch(url):
     """
-    Scrape IANA's root zone database.
-
-    The scraped data is written to standard output.
+    Fetch a URL and parse it with Beautiful Soup for scraping.
     """
-    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    return BeautifulSoup(requests.get(url).text, 'html.parser')
 
-    print('[overrides]')
 
-    logging.info("Scraping %s", ROOT_ZONE_DB)
-    zone_page = requests.get(ROOT_ZONE_DB).text
-    soup = BeautifulSoup(zone_page, 'html.parser')
+def scrape_whois_from_iana(root_zone_db_url):
+    """
+    Scrape IANA's root zone database for WHOIS servers.
+    """
+    logging.info("Scraping %s", root_zone_db_url)
+    body = fetch(root_zone_db_url)
 
-    no_server = []
-    for link in soup.select('#tld-table .tld a'):
+    for link in body.select('#tld-table .tld a'):
         if 'href' not in link.attrs:
             continue
 
@@ -45,12 +43,9 @@ def main():
         if row[2].string in ('Not assigned', 'Retired'):
             continue
 
-        time.sleep(SLEEP)
-
-        zone_url = urljoin(ROOT_ZONE_DB, link.attrs['href'])
+        zone_url = urljoin(root_zone_db_url, link.attrs['href'])
         logging.info("Scraping %s", zone_url)
-        b = requests.get(zone_url).text
-        body = BeautifulSoup(b, 'html.parser')
+        body = fetch(zone_url)
 
         title = body.find('h1')
         if title is None:
@@ -78,16 +73,20 @@ def main():
 
         if whois_server == '':
             logging.info("No WHOIS server found for %s", ace_zone)
-            no_server.append(ace_zone)
         else:
             logging.info("WHOIS server for %s is %s", ace_zone, whois_server)
-            print('%s=%s' % (ace_zone, whois_server))
+            yield (ace_zone, whois_server)
 
-    for ace_zone in no_server:
-        print('; No record for %s' % ace_zone)
 
+def main():
+    """
+    Driver for scraper.
+    """
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    print('[overrides]')
+    for ace_zone, whois_server in scrape_whois_from_iana(ROOT_ZONE_DB):
+        print('%s=%s' % (ace_zone, whois_server))
     logging.info("Done")
-
     return 0
 
 
