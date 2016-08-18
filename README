@@ -13,6 +13,15 @@ back the correct details.
 It is only intended for use with domain names currently, but could be
 generalised to work with other types of WHOIS server.
 
+Scraper
+-------
+
 The daemon comes with a scraper to pull WHOIS server information from IANA's
-root zone database at `tools/scraper.py`. This requires the `beautifulsoup4
-<https://pypi.python.org/pypi/beautifulsoup4>`_ package to run.
+root zone database. To install uwhoisd with the optional requirements for the
+scraper, run::
+
+    $ pip install 'uwhoisd[scraper]'
+
+To run the scraper, enter::
+
+	$ python -m uwhoisd.scraper
