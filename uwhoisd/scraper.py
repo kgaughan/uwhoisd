@@ -6,6 +6,7 @@ import argparse
 import logging
 import socket
 import sys
+import xml.etree.ElementTree as etree
 
 from bs4 import BeautifulSoup
 import requests
@@ -13,7 +14,28 @@ import requests
 from uwhoisd import compat, utils
 
 
+IPV4_ASSIGNMENTS = 'http://www.iana.org/assignments/ipv4-address-space/ipv4-address-space.xml'  # noqa: E501
 ROOT_ZONE_DB = 'http://www.iana.org/domains/root/db'
+
+NSS = {
+    'assignments': 'http://www.iana.org/assignments',
+}
+
+
+def fetch_ipv4_assignments(url):
+    """
+    Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
+    """
+    res = requests.get(url, stream=False)
+    root = etree.fromstring(res.text)
+    for record in root.findall('assignments:record', NSS):
+        status = record.find('assignments:status', NSS).text
+        if status not in ('ALLOCATED', 'LEGACY'):
+            continue
+        prefix = record.find('assignments:prefix', NSS).text
+        prefix, _ = prefix.lstrip('0').split('/', 1)
+        whois = record.find('assignments:whois', NSS).text
+        yield prefix, whois
 
 
 def fetch(session, url):
@@ -93,6 +115,9 @@ def make_arg_parser():
                         choices=['critical', 'error', 'warning',
                                  'info', 'debug'],
                         help="Logging level")
+    parser.add_argument('--ipv4',
+                        action='store_true',
+                        help="Scrape IPv4 assignments")
     zone_group = parser.add_mutually_exclusive_group(required=True)
     zone_group.add_argument('--new-only',
                             action='store_true',
@@ -121,6 +146,11 @@ def main():
     print('[overrides]')
     for zone in sorted(whois_servers):
         print('%s=%s' % (zone, whois_servers[zone]))
+
+    if args.ipv4:
+        print('[ipv4_assignments]')
+        for prefix, whois_server in fetch_ipv4_assignments(IPV4_ASSIGNMENTS):
+            print("%s=%s" % (prefix, whois_server))
 
     logging.info("Done")
     return 0
