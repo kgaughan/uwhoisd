@@ -15,19 +15,21 @@ from uwhoisd import compat
 ROOT_ZONE_DB = 'http://www.iana.org/domains/root/db'
 
 
-def fetch(url):
+def fetch(session, url):
     """
     Fetch a URL and parse it with Beautiful Soup for scraping.
     """
-    return BeautifulSoup(requests.get(url).text, 'html.parser')
+    return BeautifulSoup(requests.get(url, stream=False).text, 'html.parser')
 
 
 def scrape_whois_from_iana(root_zone_db_url):
     """
     Scrape IANA's root zone database for WHOIS servers.
     """
+    session = requests.Session()
+
     logging.info("Scraping %s", root_zone_db_url)
-    body = fetch(root_zone_db_url)
+    body = fetch(session, root_zone_db_url)
 
     for link in body.select('#tld-table .tld a'):
         if 'href' not in link.attrs:
@@ -42,7 +44,7 @@ def scrape_whois_from_iana(root_zone_db_url):
 
         zone_url = compat.urljoin(root_zone_db_url, link.attrs['href'])
         logging.info("Scraping %s", zone_url)
-        body = fetch(zone_url)
+        body = fetch(session, zone_url)
 
         title = body.find('h1')
         if title is None:
