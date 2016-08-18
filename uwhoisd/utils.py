@@ -3,15 +3,13 @@ Utilities.
 """
 
 import contextlib
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 import glob
 import os.path
 import re
 
 import pkg_resources
+
+from uwhoisd import compat
 
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
@@ -19,7 +17,7 @@ import pkg_resources
 FQDN_PATTERN = re.compile(r'^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$')
 
 
-class ConfigParser(configparser.SafeConfigParser):
+class ConfigParser(compat.SafeConfigParser):
     """
     Enhanced configuration parser.
     """
