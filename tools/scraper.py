@@ -6,10 +6,14 @@ import logging
 import socket
 import sys
 import time
-import urlparse
 
-import beautifulscraper
+try:
+    from urllib.parse import urljoin
+except ImportError:
+    from urlparse import urljoin
 
+from bs4 import BeautifulSoup
+import requests
 
 ROOT_ZONE_DB = 'http://www.iana.org/domains/root/db'
 SLEEP = 0
@@ -23,14 +27,14 @@ def main():
     """
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-    print '[overrides]'
+    print('[overrides]')
 
     logging.info("Scraping %s", ROOT_ZONE_DB)
-    scraper = beautifulscraper.BeautifulScraper()
-    body = scraper.go(ROOT_ZONE_DB)
+    zone_page = requests.get(ROOT_ZONE_DB).text
+    soup = BeautifulSoup(zone_page, 'html.parser')
 
     no_server = []
-    for link in body.select('#tld-table .tld a'):
+    for link in soup.select('#tld-table .tld a'):
         if 'href' not in link.attrs:
             continue
 
@@ -43,9 +47,10 @@ def main():
 
         time.sleep(SLEEP)
 
-        zone_url = urlparse.urljoin(ROOT_ZONE_DB, link.attrs['href'])
+        zone_url = urljoin(ROOT_ZONE_DB, link.attrs['href'])
         logging.info("Scraping %s", zone_url)
-        body = scraper.go(zone_url)
+        b = requests.get(zone_url).text
+        body = BeautifulSoup(b, 'html.parser')
 
         title = body.find('h1')
         if title is None:
@@ -55,7 +60,7 @@ def main():
         if len(title_parts) != 2:
             logging.info("Could not find TLD in '%s'", title)
             continue
-        ace_zone = title_parts[1].encode('idna').lower()
+        ace_zone = title_parts[1].encode('idna').decode().lower()
 
         whois_server_label = body.find('b', text='WHOIS Server:')
         whois_server = ''
@@ -76,10 +81,10 @@ def main():
             no_server.append(ace_zone)
         else:
             logging.info("WHOIS server for %s is %s", ace_zone, whois_server)
-            print '%s=%s' % (ace_zone, whois_server)
+            print('%s=%s' % (ace_zone, whois_server))
 
     for ace_zone in no_server:
-        print '; No record for %s' % ace_zone
+        print('; No record for %s' % ace_zone)
 
     logging.info("Done")
 
