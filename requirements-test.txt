@@ -1,4 +1,4 @@
--e .
+-e .[scraper]
 
 # Testing.
 coverage

@@ -5,14 +5,11 @@ A scraper which pulls zone WHOIS servers from IANA's root zone database.
 import logging
 import socket
 import sys
-import time
-try:
-    from urllib.parse import urljoin
-except ImportError:
-    from urlparse import urljoin
 
 from bs4 import BeautifulSoup
 import requests
+
+from uwhoisd import compat
 
 
 ROOT_ZONE_DB = 'http://www.iana.org/domains/root/db'
@@ -43,7 +40,7 @@ def scrape_whois_from_iana(root_zone_db_url):
         if row[2].string in ('Not assigned', 'Retired'):
             continue
 
-        zone_url = urljoin(root_zone_db_url, link.attrs['href'])
+        zone_url = compat.urljoin(root_zone_db_url, link.attrs['href'])
         logging.info("Scraping %s", zone_url)
         body = fetch(zone_url)
 

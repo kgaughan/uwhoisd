@@ -33,6 +33,12 @@ setup(
         'diesel>=2.1.1',
         'netaddr==0.7.18',
     ],
+    extras_require={
+        'scraper': [
+            'beautifulsoup4',
+            'requests',
+        ],
+    },
 
     entry_points={
         'console_scripts': (

@@ -2,7 +2,3 @@
 
 # Documentation.
 Sphinx
-
-# scrape IANA
-beautifulsoup4
-requests
