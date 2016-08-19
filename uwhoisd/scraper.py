@@ -82,6 +82,9 @@ def scrape_whois_from_iana(root_zone_db_url, existing):
 
 
 def make_arg_parser():
+    """
+    Create the argument parser.
+    """
     parser = argparse.ArgumentParser(description="Scrap WHOIS data.")
     parser.add_argument('--config',
                         help="uwhoisd configuration")
