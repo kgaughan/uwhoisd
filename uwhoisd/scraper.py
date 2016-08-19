@@ -2,6 +2,7 @@
 A scraper which pulls zone WHOIS servers from IANA's root zone database.
 """
 
+import argparse
 import logging
 import socket
 import sys
@@ -9,7 +10,7 @@ import sys
 from bs4 import BeautifulSoup
 import requests
 
-from uwhoisd import compat
+from uwhoisd import compat, utils
 
 
 ROOT_ZONE_DB = 'http://www.iana.org/domains/root/db'
@@ -22,7 +23,15 @@ def fetch(session, url):
     return BeautifulSoup(requests.get(url, stream=False).text, 'html.parser')
 
 
-def scrape_whois_from_iana(root_zone_db_url):
+def munge_zone(zone):
+    """
+    Beat the zone text into an a-label.
+    """
+    # The .strip() here is needed for RTL scripts like Arabic.
+    return zone.strip(u"\u200E\u200F.").encode('idna').decode().lower()
+
+
+def scrape_whois_from_iana(root_zone_db_url, existing):
     """
     Scrape IANA's root zone database for WHOIS servers.
     """
@@ -33,6 +42,11 @@ def scrape_whois_from_iana(root_zone_db_url):
 
     for link in body.select('#tld-table .tld a'):
         if 'href' not in link.attrs:
+            continue
+
+        zone = munge_zone(link.string)
+        # If we've already scraped this TLD, ignore it.
+        if zone in existing:
             continue
 
         # Is this a zone we should skip/ignore?
@@ -46,16 +60,6 @@ def scrape_whois_from_iana(root_zone_db_url):
         logging.info("Scraping %s", zone_url)
         body = fetch(session, zone_url)
 
-        title = body.find('h1')
-        if title is None:
-            logging.info("No title found")
-            continue
-        title_parts = ''.join(title.strings).split('.', 1)
-        if len(title_parts) != 2:
-            logging.info("Could not find TLD in '%s'", title)
-            continue
-        ace_zone = title_parts[1].encode('idna').decode().lower()
-
         whois_server_label = body.find('b', text='WHOIS Server:')
         whois_server = ''
         if whois_server_label is not None:
@@ -63,7 +67,7 @@ def scrape_whois_from_iana(root_zone_db_url):
 
         # Fallback to trying whois.nic.*
         if whois_server == '':
-            whois_server = 'whois.nic.%s' % ace_zone
+            whois_server = 'whois.nic.%s' % zone
             logging.info("Trying fallback server: %s", whois_server)
             try:
                 socket.gethostbyname(whois_server)
@@ -71,20 +75,50 @@ def scrape_whois_from_iana(root_zone_db_url):
                 whois_server = ''
 
         if whois_server == '':
-            logging.info("No WHOIS server found for %s", ace_zone)
+            logging.info("No WHOIS server found for %s", zone)
         else:
-            logging.info("WHOIS server for %s is %s", ace_zone, whois_server)
-            yield (ace_zone, whois_server)
+            logging.info("WHOIS server for %s is %s", zone, whois_server)
+            yield (zone, whois_server)
+
+
+def make_arg_parser():
+    parser = argparse.ArgumentParser(description="Scrap WHOIS data.")
+    parser.add_argument('--config',
+                        help="uwhoisd configuration")
+    parser.add_argument('--log',
+                        default='warning',
+                        choices=['critical', 'error', 'warning',
+                                 'info', 'debug'],
+                        help="Logging level")
+    zone_group = parser.add_mutually_exclusive_group(required=True)
+    zone_group.add_argument('--new-only',
+                            action='store_true',
+                            help="Only scrape new zones (requires config)")
+    zone_group.add_argument('--full',
+                            action='store_true',
+                            help="Do a full zone scrape")
+    return parser
 
 
 def main():
     """
     Driver for scraper.
     """
-    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    args = make_arg_parser().parse_args()
+
+    logging.basicConfig(stream=sys.stderr,
+                        level=logging.getLevelName(args.log.upper()))
+
+    parser = utils.make_config_parser(args.config)
+
+    whois_servers = {} if args.full else parser.get_section_dict('overrides')
+    for zone, whois_server in scrape_whois_from_iana(ROOT_ZONE_DB,
+                                                     whois_servers):
+        whois_servers[zone] = whois_server
     print('[overrides]')
-    for ace_zone, whois_server in scrape_whois_from_iana(ROOT_ZONE_DB):
-        print('%s=%s' % (ace_zone, whois_server))
+    for zone in sorted(whois_servers):
+        print('%s=%s' % (zone, whois_servers[zone]))
+
     logging.info("Done")
     return 0
 
