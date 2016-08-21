@@ -2,6 +2,7 @@
 Utilities.
 """
 
+import codecs
 import contextlib
 import glob
 import os.path
@@ -124,8 +125,8 @@ def decode_value(s):
     'foo'
     >>> decode_value('"foo\\nbar"')
     'foo\nbar'
-    >>> decode_value('foo\nbar')
-    'foo\nbar'
+    >>> decode_value('foo\\nbar')
+    'foo\\nbar'
     >>> decode_value('"foo')
     Traceback (most recent call last):
         ...
@@ -143,5 +144,5 @@ def decode_value(s):
         if s[0] != s[-1]:
             raise ValueError(
                 "The trailing quote be present and match the leading quote.")
-        return s[1:-1].decode('string_escape')
+        return codecs.decode(s[1:-1], compat.ESCAPE_CODEC)
     return s
