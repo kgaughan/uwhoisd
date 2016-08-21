@@ -34,7 +34,7 @@ Change history
 * Trap DNS resolution errors for downstream servers.
 * CoDNS are now an independent entity.
 * Use a more conservative zone discovery policy for some queries.
-* Update recursion pattern for the bz zone.
+* Update recursion pattern for the .bz zone.
 * Broken up into separate modules.
 * IANA root zone database scraper.
 * Scraped WHOIS servers associated with zones in the IANA database.

@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to uwhoisd's documentation!
-===================================
+uwhoisd
+=======
 
 A 'Universal WHOIS' proxy server: you query it for information about a
 particular domain, it works out the correct WHOIS server to query and gives
@@ -18,11 +18,4 @@ generalised to work with other types of WHOIS server.
 
    changelog
 
-
-Indices and tables
-==================
-
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
