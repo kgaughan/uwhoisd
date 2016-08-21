@@ -2,9 +2,11 @@
 Rate limiting.
 """
 
+import functools
 import time
 
 
+@functools.total_ordering
 class TokenBucket(object):
     """
     A token bucket.
@@ -57,8 +59,11 @@ class TokenBucket(object):
         self.ts = ts
         return self._available
 
-    def __cmp__(self, other):
-        return cmp(self.ts, other.ts)
+    def __eq__(self, other):
+        return self.ts == other.ts
+
+    def __lt__(self, other):
+        return self.ts < other.ts
 
     def __getstate__(self):
         return dict(zip(
