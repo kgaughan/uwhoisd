@@ -3,9 +3,9 @@ Python 2/3 compatibility layer.
 """
 
 try:
-    from configparser import SafeConfigParser
+    import configparser as _cp
 except ImportError:
-    from ConfigParser import SafeConfigParser
+    import ConfigParser as _cp
 import sys
 try:
     from urllib.parse import urljoin
@@ -23,3 +23,14 @@ __all__ = (
 PY2 = sys.version_info < (3,)
 
 ESCAPE_CODEC = 'string_escape' if PY2 else 'unicode_escape'
+
+
+if PY2:
+    import io
+
+    class SafeConfigParser(_cp.SafeConfigParser):  # noqa: D101
+
+        def read_string(self, string):  # noqa: D102
+            self.readfp(io.StringIO(string))
+else:
+    SafeConfigParser = _cp.SafeConfigParser

@@ -3,7 +3,6 @@ Utilities.
 """
 
 import codecs
-import contextlib
 import glob
 import os.path
 import re
@@ -56,9 +55,8 @@ def make_config_parser(config_path=None):
     """
     parser = ConfigParser()
 
-    with contextlib.closing(
-            pkg_resources.resource_stream('uwhoisd', 'defaults.ini')) as fp:
-        parser.readfp(fp)
+    parser.read_string(pkg_resources.resource_string('uwhoisd',
+                                                     'defaults.ini').decode())
 
     if config_path is not None:
         parser.read(config_path)
