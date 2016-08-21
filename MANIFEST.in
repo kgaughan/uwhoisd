@@ -2,4 +2,3 @@ include LICENSE ChangeLog AUTHORS
 recursive-include docs *.rst *.py
 recursive-include extra *.ini
 recursive-include uwhoisd *.ini
-prune tests
