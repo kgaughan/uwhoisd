@@ -32,6 +32,9 @@ class WhoisClient(object):
     def __init__(self, server, port):
         """
         A WHOIS client for Tornado.
+
+        :param server string: hostname of downstream server.
+        :param port int: port on downstream server to connect to.
         """
         self.server = server
         self.port = port
@@ -94,8 +97,7 @@ class WhoisListener(TCPServer):
         try:
             whois_query = yield self.stream.read_until_regex(b'\s')
             whois_query = whois_query.decode().strip().lower()
-            if (not utils.is_well_formed_fqdn(whois_query) and
-                    ':' not in whois_query):
+            if not utils.is_well_formed_fqdn(whois_query):
                 whois_entry = "; Bad request: '{0}'\r\n".format(whois_query)
             else:
                 whois_entry = self.whois(whois_query)
