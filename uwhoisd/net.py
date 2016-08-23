@@ -2,9 +2,11 @@
 Networking code.
 """
 
+import contextlib
 import logging
 import signal
 import socket
+import time
 
 import tornado
 from tornado import gen
@@ -76,37 +78,104 @@ class WhoisClient(object):
         return to_return
 
 
+@contextlib.contextmanager
+def auto_timeout(self, timeout):
+    """
+    Create a timeout for the IOLoop.
+    """
+    try:
+        handle = IOLoop.instance().add_timeout(time.time() + timeout,
+                                               self.timed_out)
+        yield handle
+    except tornado.iostream.StreamClosedError:
+        if not self._timed_out:
+            logger.exception("Stream Closed, no timeout.")
+    except Exception:
+        logger.exception("Unable to set timeout")
+    finally:
+        IOLoop.instance().remove_timeout(handle)
+
+
+class ClientHandler(object):
+    """
+    Handle a uWhoisd client.
+    """
+
+    def __init__(self, stream, query_fct, client, timeout):
+        """
+        Handle a uWhoisd client.
+        """
+        self.stream = stream
+        self.query_fct = query_fct
+        self.client = client
+        self.timeout = timeout
+        self._timed_out = False
+
+    @gen.coroutine
+    def timed_out(self):
+        """
+        Close the stream if the client doesn't send a query fast enough.
+        """
+        self._timed_out = True
+        logger.warning('Connection from %s timed-out.', self.client)
+        try:
+            yield self.stream.write("; Request timed out\r\n".encode())
+        except Exception:
+            logger.exception("Unknown exception by '%s'", self.client)
+        finally:
+            self.stream.close()
+
+    @gen.coroutine
+    def on_connect(self):
+        """
+        Handle a connexion.
+        """
+        try:
+            with auto_timeout(self, self.timeout):
+                self.data = yield self.stream.read_until_regex(b'\s')
+            if self._timed_out:
+                return
+            whois_query = self.data.decode().strip().lower()
+            if not utils.is_well_formed_fqdn(whois_query):
+                whois_entry = "; Bad request: '{0}'\r\n".format(whois_query)
+            else:
+                whois_entry = self.query_fct(whois_query)
+            yield self.stream.write(whois_entry.encode())
+        except tornado.iostream.StreamClosedError:
+            logger.warning('Connection closed by %s.', self.client)
+        except Exception:
+            logger.exception("Unknown exception by '%s'", self.client)
+        finally:
+            self.stream.close()
+
+
 class WhoisListener(TCPServer):
     """
     Listener for whois clients.
     """
 
-    def __init__(self, whois):
+    def __init__(self, whois, timeout=15):
         """
         Listen to queries from whois clients.
         """
         super(WhoisListener, self).__init__()
         self.whois = whois
+        self.timeout = timeout
 
     @gen.coroutine
     def handle_stream(self, stream, address):
         """
         Respond to a single request.
         """
-        self.stream = stream
         try:
-            whois_query = yield self.stream.read_until_regex(b'\s')
-            whois_query = whois_query.decode().strip().lower()
-            if not utils.is_well_formed_fqdn(whois_query):
-                whois_entry = "; Bad request: '{0}'\r\n".format(whois_query)
-            else:
-                whois_entry = self.whois(whois_query)
-            yield self.stream.write(whois_entry.encode())
-        except tornado.iostream.StreamClosedError:
-            logger.warning('Connection closed by %s.', address)
+            connection = ClientHandler(stream, self.whois, address,
+                                       self.timeout)
+            yield connection.on_connect()
         except Exception:
-            logger.exception("Unknown exception by '%s'", address)
-        self.stream.close()
+            # Something bad happened
+            logger.exception("Unknown exception when handling '%s'", address)
+        finally:
+            stream.close()
 
 
 def start_service(iface, port, whois):
@@ -115,7 +184,7 @@ def start_service(iface, port, whois):
     """
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
-    server = WhoisListener(whois)
+    server = WhoisListener(whois, 15)
     logger.info("Listen on %s:%d", iface, port)
     server.bind(port, iface)
     server.start(None)
