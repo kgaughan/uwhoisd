@@ -1,0 +1,12 @@
+Planned:
+
+ * Rate limiting.
+ * Whitelists and blacklists.
+ * Thread/process pool for the scraper. Currently, it's really, really slow.
+ * Add a scraper mode where it just looks for *new* TLDs rather than spidering
+   everything. 90% of the time, this is exactly what we want. Will require the
+   config file be read, but that's OK.
+
+Non-planned:
+
+ * WHOWAS: this should be a separate service, really.
