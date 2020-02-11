@@ -26,7 +26,7 @@ class Clock(object):
 
 def create_uwhois():
     """Prepare a UWhois object for testing."""
-    config = path.join(HERE, '..', 'extra', 'uwhoisd.ini')
+    config = path.join(HERE, "..", "extra", "uwhoisd.ini")
     parser = make_config_parser(config)
     uwhois = uwhoisd.UWhois()
     uwhois.read_config(parser)
@@ -35,5 +35,5 @@ def create_uwhois():
 
 def read_transcript(name):
     """Read a WHOIS transcript file."""
-    with open(path.join(HERE, 'transcripts', name), 'r') as fh:
+    with open(path.join(HERE, "transcripts", name), "r") as fh:
         return fh.read()

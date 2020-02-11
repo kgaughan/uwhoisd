@@ -11,10 +11,10 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.tcpserver import TCPServer
 
-from uwhoisd import utils
+from . import utils
 
 
-logger = logging.getLogger('uwhoisd')
+logger = logging.getLogger("uwhoisd")
 
 
 def handle_signal(sig, frame):
@@ -57,20 +57,20 @@ class WhoisClient(object):
         """
         Perform a query against the server.
         """
-        to_return = ''
+        to_return = ""
         try:
-            bytes_whois = b''
-            self.sock.sendall('{0}\r\n'.format(query).encode())
+            bytes_whois = b""
+            self.sock.sendall("{0}\r\n".format(query).encode())
             while True:
                 data = self.sock.recv(2048)
                 if data:
                     bytes_whois += data
                     continue
                 break
-            to_return = str(bytes_whois, 'utf-8', 'ignore')
+            to_return = str(bytes_whois, "utf-8", "ignore")
         except OSError as e:
             # Catches all socket.* exceptions
-            return '{0}: {1}\n'.format(self.server, e)
+            return "{0}: {1}\n".format(self.server, e)
         except Exception:
             logger.exception("Unknown exception when querying '%s'", query)
         return to_return
@@ -95,7 +95,7 @@ class WhoisListener(TCPServer):
         """
         self.stream = stream
         try:
-            whois_query = yield self.stream.read_until_regex(b'\s')
+            whois_query = yield self.stream.read_until_regex(b"\n")
             whois_query = whois_query.decode().strip().lower()
             if not utils.is_well_formed_fqdn(whois_query):
                 whois_entry = "; Bad request: '{0}'\r\n".format(whois_query)
@@ -103,7 +103,7 @@ class WhoisListener(TCPServer):
                 whois_entry = self.whois(whois_query)
             yield self.stream.write(whois_entry.encode())
         except tornado.iostream.StreamClosedError:
-            logger.warning('Connection closed by %s.', address)
+            logger.warning("Connection closed by %s.", address)
         except Exception:
             logger.exception("Unknown exception by '%s'", address)
         self.stream.close()

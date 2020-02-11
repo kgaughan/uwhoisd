@@ -2,16 +2,15 @@ language: python
 cache: pip
 sudo: false
 python:
-  - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
-  - "3.5-dev"
-  - "nightly"
+  - "3.6"
+  - "3.7"
+  - "3.8"
 install:
-  - pip install -r requirements-test.txt
+  - pip3 install -r requirements-test.txt
 before_script:
-  - flake8 uwhoisd
-  - flake8 --ignore=D100,D101,D102,D103,D104,D200 tests setup.py
+  - flake8 --ignore=E501,D105,D200,D401 uwhoisd
+  - flake8 --ignore=D100,D101,D102,D103,D104,D107,D200,I201 tests setup.py
 script:
   - py.test --doctest-modules uwhoisd tests

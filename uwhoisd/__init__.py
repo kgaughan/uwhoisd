@@ -2,6 +2,7 @@
 A 'universal' WHOIS proxy server.
 """
 
+import configparser
 import logging
 import logging.config
 import os.path
@@ -9,14 +10,14 @@ import re
 import socket
 import sys
 
-from uwhoisd import caching, net, utils
+from . import caching, net, utils
 
 
 USAGE = "Usage: %s <config>"
 
-PORT = socket.getservbyname('whois', 'tcp')
+PORT = socket.getservbyname("whois", "tcp")
 
-logger = logging.getLogger('uwhoisd')
+logger = logging.getLogger("uwhoisd")
 
 
 class UWhois(object):
@@ -25,13 +26,13 @@ class UWhois(object):
     """
 
     __slots__ = (
-        'conservative',
-        'overrides',
-        'prefixes',
-        'recursion_patterns',
-        'registry_whois',
-        'page_feed',
-        'suffix',
+        "conservative",
+        "overrides",
+        "prefixes",
+        "recursion_patterns",
+        "registry_whois",
+        "page_feed",
+        "suffix",
     )
 
     def __init__(self):
@@ -51,18 +52,18 @@ class UWhois(object):
         """
         Read the configuration for this object from a config file.
         """
-        self.registry_whois = parser.get_bool('uwhoisd', 'registry_whois')
-        self.page_feed = parser.get_bool('uwhoisd', 'page_feed')
-        self.suffix = parser.get('uwhoisd', 'suffix')
-        self.conservative = parser.get_list('uwhoisd', 'conservative')
+        self.registry_whois = parser.get_bool("uwhoisd", "registry_whois")
+        self.page_feed = parser.get_bool("uwhoisd", "page_feed")
+        self.suffix = parser.get("uwhoisd", "suffix")
+        self.conservative = parser.get_list("uwhoisd", "conservative")
 
-        for section in ('overrides', 'prefixes'):
+        for section in ("overrides", "prefixes"):
             setattr(self, section, parser.get_section_dict(section))
 
-        for zone, pattern in parser.items('recursion_patterns'):
+        for zone, pattern in parser.items("recursion_patterns"):
             self.recursion_patterns[zone] = re.compile(
-                utils.decode_value(pattern),
-                re.I)
+                utils.decode_value(pattern), re.I
+            )
 
     def get_whois_server(self, zone):
         """
@@ -71,9 +72,9 @@ class UWhois(object):
         if zone in self.overrides:
             server = self.overrides[zone]
         else:
-            server = zone + '.' + self.suffix
-        if ':' in server:
-            server, port = server.split(':', 1)
+            server = zone + "." + self.suffix
+        if ":" in server:
+            server, port = server.split(":", 1)
             port = int(port)
         else:
             port = PORT
@@ -84,13 +85,13 @@ class UWhois(object):
         Extract the registrar's WHOIS server from the registry response.
         """
         matches = self.recursion_patterns[zone].search(response)
-        return None if matches is None else matches.group('server')
+        return None if matches is None else matches.group("server")
 
     def get_prefix(self, zone):
         """
         Get the prefix required when querying the servers for the given zone.
         """
-        return self.prefixes[zone] if zone in self.prefixes else ''
+        return self.prefixes[zone] if zone in self.prefixes else ""
 
     def whois(self, query):
         """
@@ -98,7 +99,7 @@ class UWhois(object):
         """
         # Figure out the zone whose WHOIS server we're meant to be querying.
         for zone in self.conservative:
-            if query.endswith('.' + zone):
+            if query.endswith("." + zone):
                 break
         else:
             _, zone = utils.split_fqdn(query)
@@ -119,9 +120,7 @@ class UWhois(object):
                     # A form feed character so it's possible to find the split.
                     response += "\f"
                 with net.WhoisClient(server, port) as client:
-                    logger.info(
-                        "Recursive query to %s about %s",
-                        server, query)
+                    logger.info("Recursive query to %s about %s", server, query)
                     response += client.whois(query)
 
         return response
@@ -132,7 +131,7 @@ def main():
     Execute the daemon.
     """
     if len(sys.argv) != 2:
-        print >> sys.stderr, USAGE % os.path.basename(sys.argv[0])
+        print(USAGE % os.path.basename(sys.argv[0]), file=sys.stderr)
         return 1
 
     logging.config.fileConfig(sys.argv[1])
@@ -141,16 +140,16 @@ def main():
         logger.info("Reading config file at '%s'", sys.argv[1])
         parser = utils.make_config_parser(sys.argv[1])
 
-        iface = parser.get('uwhoisd', 'iface')
-        port = parser.getint('uwhoisd', 'port')
+        iface = parser.get("uwhoisd", "iface")
+        port = parser.getint("uwhoisd", "port")
         logger.info("Listen on %s:%d", iface, port)
 
         uwhois = UWhois()
         uwhois.read_config(parser)
 
-        cache = caching.get_cache(dict(parser.items('cache')))
+        cache = caching.get_cache(dict(parser.items("cache")))
         whois = caching.wrap_whois(cache, uwhois.whois)
-    except:  # pylint: disable-msg=W0703
+    except configparser.Error:
         logger.exception("Could not parse config file")
         return 1
     else:
@@ -158,5 +157,5 @@ def main():
         return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
