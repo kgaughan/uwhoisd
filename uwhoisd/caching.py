@@ -9,7 +9,7 @@ import time
 import pkg_resources
 
 
-logger = logging.getLogger('uwhoisd')
+logger = logging.getLogger("uwhoisd")
 
 
 class UnknownCache(Exception):
@@ -22,14 +22,13 @@ def get_cache(cfg):
     """
     Attempt to load the configured cache.
     """
-    cache_name = cfg.pop('type', 'null')
-    if cache_name == 'null':
+    cache_name = cfg.pop("type", "null")
+    if cache_name == "null":
         logger.info("Caching deactivated")
         return None
-    for ep in pkg_resources.iter_entry_points('uwhoisd.cache'):
+    for ep in pkg_resources.iter_entry_points("uwhoisd.cache"):
         if ep.name == cache_name:
-            logger.info("Using cache '%s' with the parameters %r",
-                        cache_name, cfg)
+            logger.info("Using cache '%s' with the parameters %r", cache_name, cfg)
             cache_type = ep.load()
             return cache_type(**cfg)
     raise UnknownCache(cache_name)
@@ -43,9 +42,6 @@ def wrap_whois(cache, whois_func):
         return whois_func
 
     def wrapped(query):
-        """
-        Caching wrapper around whois callable.
-        """
         response = cache.get(query)
         if response is None:
             response = whois_func(query)
@@ -53,6 +49,7 @@ def wrap_whois(cache, whois_func):
         else:
             logger.info("Cache hit for '%s'", query)
         return response
+
     return wrapped
 
 
@@ -72,12 +69,7 @@ class LFU(object):
     # more apt, but I haven't went that route as an LRU cache is somewhat more
     # awkward and involved to implement correctly.
 
-    __slots__ = (
-        'cache',
-        'max_age',
-        'max_size',
-        'queue',
-    )
+    __slots__ = ("cache", "max_age", "max_size", "queue")
 
     clock = staticmethod(time.time)
 

@@ -3,21 +3,20 @@ Utilities.
 """
 
 import codecs
+import configparser
 import glob
 import os.path
 import re
 
 import pkg_resources
 
-from uwhoisd import compat
-
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
-FQDN_PATTERN = re.compile(r'^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$')
+FQDN_PATTERN = re.compile(r"^([-a-z0-9]{1,63})(\.[-a-z0-9]{1,63}){1,}$")
 
 
-class ConfigParser(compat.SafeConfigParser):
+class ConfigParser(configparser.ConfigParser):
     """
     Enhanced configuration parser.
     """
@@ -26,7 +25,7 @@ class ConfigParser(compat.SafeConfigParser):
         """
         Get a configuration option as a boolean.
         """
-        return self.get(section, option).lower() in ('1', 'true', 'yes', 'on')
+        return self.get(section, option).lower() in ("1", "true", "yes", "on")
 
     def get_list(self, section, option):
         """
@@ -35,7 +34,7 @@ class ConfigParser(compat.SafeConfigParser):
         lines = []
         for line in self.get(section, option).split("\n"):
             line = line.strip()
-            if line != '':
+            if line != "":
                 lines.append(line)
         return lines
 
@@ -44,8 +43,9 @@ class ConfigParser(compat.SafeConfigParser):
         Pull a section out of the config as a dictionary safely.
         """
         if self.has_section(section):
-            return dict((key, decode_value(value))
-                        for key, value in self.items(section))
+            return dict(
+                (key, decode_value(value)) for key, value in self.items(section)
+            )
         return {}
 
 
@@ -55,14 +55,16 @@ def make_config_parser(config_path=None):
     """
     parser = ConfigParser()
 
-    parser.read_string(pkg_resources.resource_string('uwhoisd',
-                                                     'defaults.ini').decode())
+    parser.read_string(
+        pkg_resources.resource_string("uwhoisd", "defaults.ini").decode()
+    )
 
     if config_path is not None:
         parser.read(config_path)
-        if parser.has_option('include', 'path'):
-            glob_path = os.path.join(os.path.dirname(config_path),
-                                     parser.get('include', 'path'))
+        if parser.has_option("include", "path"):
+            glob_path = os.path.join(
+                os.path.dirname(config_path), parser.get("include", "path")
+            )
             parser.read(glob.glob(glob_path))
 
     return parser
@@ -107,7 +109,7 @@ def split_fqdn(fqdn):
     >>> split_fqdn('keithgaughan.co.uk')
     ['keithgaughan', 'co.uk']
     """
-    return fqdn.rstrip('.').split('.', 1)
+    return fqdn.rstrip(".").split(".", 1)
 
 
 def decode_value(s):
@@ -141,6 +143,7 @@ def decode_value(s):
     if len(s) > 1 and s[0] in ('"', "'"):
         if s[0] != s[-1]:
             raise ValueError(
-                "The trailing quote be present and match the leading quote.")
-        return codecs.decode(s[1:-1], compat.ESCAPE_CODEC)
+                "The trailing quote be present and match the leading quote."
+            )
+        return codecs.decode(s[1:-1], "unicode_escape")
     return s
