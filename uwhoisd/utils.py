@@ -43,9 +43,7 @@ class ConfigParser(configparser.ConfigParser):
         Pull a section out of the config as a dictionary safely.
         """
         if self.has_section(section):
-            return dict(
-                (key, decode_value(value)) for key, value in self.items(section)
-            )
+            return {key: decode_value(value) for key, value in self.items(section)}
         return {}
 
 
