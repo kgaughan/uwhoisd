@@ -62,8 +62,7 @@ class WhoisClient(object):
             bytes_whois = b""
             self.sock.sendall("{0}\r\n".format(query).encode())
             while True:
-                data = self.sock.recv(2048)
-                if data:
+                if data := self.sock.recv(2048):
                     bytes_whois += data
                     continue
                 break
@@ -97,10 +96,12 @@ class WhoisListener(TCPServer):
         try:
             whois_query = yield self.stream.read_until_regex(b"\n")
             whois_query = whois_query.decode().strip().lower()
-            if not utils.is_well_formed_fqdn(whois_query):
-                whois_entry = "; Bad request: '{0}'\r\n".format(whois_query)
-            else:
-                whois_entry = self.whois(whois_query)
+            whois_entry = (
+                self.whois(whois_query)
+                if utils.is_well_formed_fqdn(whois_query)
+                else "; Bad request: '{0}'\r\n".format(whois_query)
+            )
+
             yield self.stream.write(whois_entry.encode())
         except tornado.iostream.StreamClosedError:
             logger.warning("Connection closed by %s.", address)

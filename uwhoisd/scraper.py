@@ -90,7 +90,7 @@ def scrape_whois_from_iana(root_zone_db_url, existing):
 
         # Fallback to trying whois.nic.*
         if whois_server == "":
-            whois_server = "whois.nic.%s" % zone
+            whois_server = f"whois.nic.{zone}"
             logging.info("Trying fallback server: %s", whois_server)
             try:
                 socket.gethostbyname(whois_server)
@@ -142,12 +142,12 @@ def main():
         whois_servers[zone] = whois_server
     print("[overrides]")
     for zone in sorted(whois_servers):
-        print("%s=%s" % (zone, whois_servers[zone]))
+        print(f"{zone}={whois_servers[zone]}")
 
     if args.ipv4:
         print("[ipv4_assignments]")
         for prefix, whois_server in fetch_ipv4_assignments(IPV4_ASSIGNMENTS):
-            print("%s=%s" % (prefix, whois_server))
+            print(f"{prefix}={whois_server}")
 
     logging.info("Done")
     return 0

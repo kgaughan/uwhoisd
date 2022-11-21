@@ -72,7 +72,7 @@ class UWhois(object):
         if zone in self.overrides:
             server = self.overrides[zone]
         else:
-            server = zone + "." + self.suffix
+            server = f"{zone}.{self.suffix}"
         if ":" in server:
             server, port = server.split(":", 1)
             port = int(port)
@@ -99,7 +99,7 @@ class UWhois(object):
         """
         # Figure out the zone whose WHOIS server we're meant to be querying.
         for zone in self.conservative:
-            if query.endswith("." + zone):
+            if query.endswith(f".{zone}"):
                 break
         else:
             _, zone = utils.split_fqdn(query)
