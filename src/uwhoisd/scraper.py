@@ -6,6 +6,7 @@ import argparse
 import logging
 import socket
 import sys
+import typing as t
 from urllib.parse import urljoin
 import xml.etree.ElementTree as etree
 
@@ -14,20 +15,19 @@ import requests
 
 from . import utils
 
-
-IPV4_ASSIGNMENTS = (
-    "http://www.iana.org/assignments/ipv4-address-space/ipv4-address-space.xml"
-)  # noqa: E501
-ROOT_ZONE_DB = "http://www.iana.org/domains/root/db"
+IPV4_ASSIGNMENTS = "https://www.iana.org/assignments/ipv4-address-space/ipv4-address-space.xml"
+ROOT_ZONE_DB = "https://www.iana.org/domains/root/db"
 
 NSS = {"assignments": "http://www.iana.org/assignments"}
 
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
-def fetch_ipv4_assignments(url):
+
+def fetch_ipv4_assignments(url: str):
     """
     Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
     """
-    res = requests.get(url, stream=False)
+    res = requests.get(url, stream=False, timeout=10)
     root = etree.fromstring(res.text)
     for record in root.findall("assignments:record", NSS):
         status = record.find("assignments:status", NSS).text
@@ -39,22 +39,22 @@ def fetch_ipv4_assignments(url):
         yield prefix, whois
 
 
-def fetch(session, url):
+def fetch(session: requests.Session, url: str):
     """
     Fetch a URL and parse it with Beautiful Soup for scraping.
     """
-    return BeautifulSoup(requests.get(url, stream=False).text, "html.parser")
+    return BeautifulSoup(session.get(url, stream=False, timeout=10).text, "html.parser")
 
 
-def munge_zone(zone):
+def munge_zone(zone: str) -> str:
     """
     Beat the zone text into an a-label.
     """
     # The .strip() here is needed for RTL scripts like Arabic.
-    return zone.strip("\u200E\u200F.").encode("idna").decode().lower()
+    return zone.strip("\u200e\u200f.").encode("idna").decode().lower()
 
 
-def scrape_whois_from_iana(root_zone_db_url, existing):
+def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]):
     """
     Scrape IANA's root zone database for WHOIS servers.
     """
@@ -83,7 +83,7 @@ def scrape_whois_from_iana(root_zone_db_url, existing):
         logging.info("Scraping %s", zone_url)
         body = fetch(session, zone_url)
 
-        whois_server_label = body.find("b", text="WHOIS Server:")
+        whois_server_label = body.find("b", string="WHOIS Server:")
         whois_server = ""
         if whois_server_label is not None:
             whois_server = whois_server_label.next_sibling.strip().lower()
@@ -104,18 +104,12 @@ def scrape_whois_from_iana(root_zone_db_url, existing):
             yield (zone, whois_server)
 
 
-def make_arg_parser():
+def make_arg_parser() -> argparse.ArgumentParser:
     """
     Create the argument parser.
     """
     parser = argparse.ArgumentParser(description="Scrap WHOIS data.")
     parser.add_argument("--config", help="uwhoisd configuration")
-    parser.add_argument(
-        "--log",
-        default="warning",
-        choices=["critical", "error", "warning", "info", "debug"],
-        help="Logging level",
-    )
     parser.add_argument("--ipv4", action="store_true", help="Scrape IPv4 assignments")
     zone_group = parser.add_mutually_exclusive_group(required=True)
     zone_group.add_argument(
@@ -133,12 +127,12 @@ def main():
     """
     args = make_arg_parser().parse_args()
 
-    logging.basicConfig(stream=sys.stderr, level=logging.getLevelName(args.log.upper()))
-
     parser = utils.make_config_parser(args.config)
 
     whois_servers = {} if args.full else parser.get_section_dict("overrides")
+    logging.info("Starting scrape of %s", ROOT_ZONE_DB)
     for zone, whois_server in scrape_whois_from_iana(ROOT_ZONE_DB, whois_servers):
+        logging.info("Scraped .%s: %s", zone, whois_server)
         whois_servers[zone] = whois_server
     print("[overrides]")
     for zone in sorted(whois_servers):

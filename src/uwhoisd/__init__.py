@@ -12,7 +12,6 @@ import sys
 
 from . import caching, net, utils
 
-
 USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname("whois", "tcp")
@@ -20,7 +19,7 @@ PORT = socket.getservbyname("whois", "tcp")
 logger = logging.getLogger("uwhoisd")
 
 
-class UWhois(object):
+class UWhois:
     """
     Universal WHOIS proxy.
     """
@@ -39,7 +38,7 @@ class UWhois(object):
         """
         Initialise the proxy.
         """
-        super(UWhois, self).__init__()
+        super().__init__()
         self.suffix = None
         self.overrides = {}
         self.prefixes = {}
@@ -61,9 +60,7 @@ class UWhois(object):
             setattr(self, section, parser.get_section_dict(section))
 
         for zone, pattern in parser.items("recursion_patterns"):
-            self.recursion_patterns[zone] = re.compile(
-                utils.decode_value(pattern), re.I
-            )
+            self.recursion_patterns[zone] = re.compile(utils.decode_value(pattern), re.I)
 
     def get_whois_server(self, zone):
         """

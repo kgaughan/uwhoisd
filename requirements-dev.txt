@@ -1,4 +1,0 @@
--r requirements-test.txt
-
-# Documentation.
-Sphinx

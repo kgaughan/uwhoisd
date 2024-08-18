@@ -1,11 +1,12 @@
 from uwhoisd import caching
+
 from . import utils
 
 
 class LFU(caching.LFU):
     def __init__(self, max_size=256, max_age=300):
         self.clock = utils.Clock()
-        super(LFU, self).__init__(max_size, max_age)
+        super().__init__(max_size, max_age)
 
 
 def test_insertion():
