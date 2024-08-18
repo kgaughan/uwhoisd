@@ -66,7 +66,7 @@ def test_comparison():
 def test_pickle():
     original = rl.TokenBucket(5, 20)
     original.consume(1)
-    unpickled = pickle.loads(pickle.dumps(original))
+    unpickled = pickle.loads(pickle.dumps(original))  # noqa: S301
     assert unpickled is not original
     assert original.clock is unpickled.clock
     assert original.ts == unpickled.ts

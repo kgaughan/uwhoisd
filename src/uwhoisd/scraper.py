@@ -8,7 +8,7 @@ import socket
 import sys
 import typing as t
 from urllib.parse import urljoin
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as etree  # noqa: N813
 
 from bs4 import BeautifulSoup
 import requests
@@ -28,7 +28,7 @@ def fetch_ipv4_assignments(url: str):
     Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
     """
     res = requests.get(url, stream=False, timeout=10)
-    root = etree.fromstring(res.text)
+    root = etree.fromstring(res.text)  # noqa: S314
     for record in root.findall("assignments:record", NSS):
         status = record.findtext("assignments:status", default="", namespaces=NSS)
         if status not in ("ALLOCATED", "LEGACY"):
@@ -36,9 +36,8 @@ def fetch_ipv4_assignments(url: str):
         prefix = record.findtext("assignments:prefix", default="", namespaces=NSS)
         prefix, _ = prefix.lstrip("0").split("/", 1)
         whois = record.findtext("assignments:whois", default="", namespaces=NSS)
-        if prefix == "" or whois == "":
-            continue
-        yield prefix, whois
+        if prefix != "" and whois != "":
+            yield prefix, whois
 
 
 def fetch(session: requests.Session, url: str):
