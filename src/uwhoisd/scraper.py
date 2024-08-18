@@ -8,7 +8,7 @@ import socket
 import sys
 import typing as t
 from urllib.parse import urljoin
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as etree  # noqa: N813
 
 from bs4 import BeautifulSoup
 import requests
@@ -28,15 +28,16 @@ def fetch_ipv4_assignments(url: str):
     Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
     """
     res = requests.get(url, stream=False, timeout=10)
-    root = etree.fromstring(res.text)
+    root = etree.fromstring(res.text)  # noqa: S314
     for record in root.findall("assignments:record", NSS):
-        status = record.find("assignments:status", NSS).text
+        status = record.findtext("assignments:status", default="", namespaces=NSS)
         if status not in ("ALLOCATED", "LEGACY"):
             continue
-        prefix = record.find("assignments:prefix", NSS).text
+        prefix = record.findtext("assignments:prefix", default="", namespaces=NSS)
         prefix, _ = prefix.lstrip("0").split("/", 1)
-        whois = record.find("assignments:whois", NSS).text
-        yield prefix, whois
+        whois = record.findtext("assignments:whois", default="", namespaces=NSS)
+        if prefix != "" and whois != "":
+            yield prefix, whois
 
 
 def fetch(session: requests.Session, url: str):
@@ -64,7 +65,7 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
     body = fetch(session, root_zone_db_url)
 
     for link in body.select("#tld-table .tld a"):
-        if "href" not in link.attrs:
+        if "href" not in link.attrs or link.string is None:
             continue
 
         zone = munge_zone(link.string)
