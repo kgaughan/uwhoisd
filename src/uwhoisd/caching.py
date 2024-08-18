@@ -24,7 +24,7 @@ def get_cache(cfg):
     if cache_name == "null":
         logger.info("Caching deactivated")
         return None
-    for ep in metadata.entry_points("uwhoisd.cache"):
+    for ep in metadata.entry_points(name="uwhoisd.cache"):
         if ep.name == cache_name:
             logger.info("Using cache '%s' with the parameters %r", cache_name, cfg)
             cache_type = ep.load()
