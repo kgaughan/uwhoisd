@@ -15,7 +15,7 @@ class Clock:
     A fake clock.
     """
 
-    def __init__(self, initial=0):
+    def __init__(self, initial: int = 0):
         super().__init__()
         self.ticks = initial
 
@@ -23,7 +23,7 @@ class Clock:
         return self.ticks
 
 
-def create_uwhois():
+def create_uwhois() -> uwhoisd.UWhois:
     """Prepare a UWhois object for testing."""
     config = path.join(HERE, "..", "extra", "uwhoisd.ini")
     parser = make_config_parser(config)
@@ -32,7 +32,7 @@ def create_uwhois():
     return uwhois
 
 
-def read_transcript(name):
+def read_transcript(name: str) -> str:
     """Read a WHOIS transcript file."""
     with open(path.join(HERE, "transcripts", name)) as fh:
         return fh.read()

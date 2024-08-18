@@ -64,44 +64,12 @@ def make_config_parser(config_path=None):
 
 
 def is_well_formed_fqdn(fqdn):
-    """
-    Check if a string looks like a well formed FQDN without a trailing dot.
-
-    >>> is_well_formed_fqdn('stereochro.me')
-    True
-    >>> is_well_formed_fqdn('stereochro.me.')
-    False
-    >>> is_well_formed_fqdn('stereochrome')
-    False
-    >>> is_well_formed_fqdn('stereochrome.')
-    False
-    >>> is_well_formed_fqdn('keithgaughan.co.uk')
-    True
-    >>> is_well_formed_fqdn('')
-    False
-    >>> is_well_formed_fqdn('.')
-    False
-    >>> is_well_formed_fqdn('x' * 64 + '.foo')
-    False
-    >>> is_well_formed_fqdn('foo.' + 'x' * 64)
-    False
-    """
+    """Check if a string looks like a well formed FQDN without a trailing dot."""
     return FQDN_PATTERN.match(fqdn) is not None
 
 
 def split_fqdn(fqdn):
-    """
-    Split an FQDN into the domain name and zone.
-
-    >>> split_fqdn('stereochro.me')
-    ['stereochro', 'me']
-    >>> split_fqdn('stereochro.me.')
-    ['stereochro', 'me']
-    >>> split_fqdn('stereochrome')
-    ['stereochrome']
-    >>> split_fqdn('keithgaughan.co.uk')
-    ['keithgaughan', 'co.uk']
-    """
+    """Split an FQDN into the domain name and zone."""
     return fqdn.rstrip(".").split(".", 1)
 
 

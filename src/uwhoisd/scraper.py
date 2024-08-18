@@ -30,13 +30,18 @@ def fetch_ipv4_assignments(url: str):
     res = requests.get(url, stream=False, timeout=10)
     root = etree.fromstring(res.text)
     for record in root.findall("assignments:record", NSS):
-        status = record.find("assignments:status", NSS).text
-        if status not in ("ALLOCATED", "LEGACY"):
+        status_elem = record.find("assignments:status", NSS)
+        if status_elem is None or status_elem.text not in ("ALLOCATED", "LEGACY"):
             continue
-        prefix = record.find("assignments:prefix", NSS).text
+        prefix_elem = record.find("assignments:prefix", NSS)
+        whois_elem = record.find("assignments:whois", NSS)
+        if prefix_elem is None or whois_elem is None:
+            continue
+        prefix = prefix_elem.text or ""
         prefix, _ = prefix.lstrip("0").split("/", 1)
-        whois = record.find("assignments:whois", NSS).text
-        yield prefix, whois
+        if prefix == "":
+            continue
+        yield prefix, whois_elem.text
 
 
 def fetch(session: requests.Session, url: str):

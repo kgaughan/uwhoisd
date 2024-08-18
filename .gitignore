@@ -13,3 +13,5 @@ __pycache__/
 # General detritus
 *~
 .*.sw?
+
+/src/uwhoisd/_version.py

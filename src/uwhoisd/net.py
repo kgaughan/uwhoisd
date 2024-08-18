@@ -16,7 +16,7 @@ from . import utils
 logger = logging.getLogger("uwhoisd")
 
 
-def handle_signal(sig, frame):
+def handle_signal(_sig, _frame):
     """
     Stop the main loop on signal.
     """
@@ -46,7 +46,7 @@ class WhoisClient:
         self.sock.settimeout(10)
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         """
         Terminate a `with` statement.
         """
