@@ -7,17 +7,16 @@ from os import path
 import uwhoisd
 from uwhoisd.utils import make_config_parser
 
-
 HERE = path.dirname(__file__)
 
 
-class Clock(object):
+class Clock:
     """
     A fake clock.
     """
 
     def __init__(self, initial=0):
-        super(Clock, self).__init__()
+        super().__init__()
         self.ticks = initial
 
     def __call__(self):
@@ -35,5 +34,5 @@ def create_uwhois():
 
 def read_transcript(name):
     """Read a WHOIS transcript file."""
-    with open(path.join(HERE, "transcripts", name), "r") as fh:
+    with open(path.join(HERE, "transcripts", name)) as fh:
         return fh.read()

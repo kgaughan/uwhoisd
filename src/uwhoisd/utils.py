@@ -5,11 +5,9 @@ Utilities.
 import codecs
 import configparser
 import glob
+from importlib import resources
 import os.path
 import re
-
-import pkg_resources
-
 
 # We only accept ASCII or ACE-encoded domain names. IDNs must be converted
 # to ACE first.
@@ -53,16 +51,13 @@ def make_config_parser(config_path=None):
     """
     parser = ConfigParser()
 
-    parser.read_string(
-        pkg_resources.resource_string("uwhoisd", "defaults.ini").decode()
-    )
+    with resources.open_text("uwhoisd", "defaults.ini", encoding="utf-8") as fh:
+        parser.read_file(fh)
 
     if config_path is not None:
         parser.read(config_path)
         if parser.has_option("include", "path"):
-            glob_path = os.path.join(
-                os.path.dirname(config_path), parser.get("include", "path")
-            )
+            glob_path = os.path.join(os.path.dirname(config_path), parser.get("include", "path"))
             parser.read(glob.glob(glob_path))
 
     return parser
@@ -140,8 +135,6 @@ def decode_value(s):
     """
     if len(s) > 1 and s[0] in ('"', "'"):
         if s[0] != s[-1]:
-            raise ValueError(
-                "The trailing quote be present and match the leading quote."
-            )
+            raise ValueError("The trailing quote be present and match the leading quote.")
         return codecs.decode(s[1:-1], "unicode_escape")
     return s

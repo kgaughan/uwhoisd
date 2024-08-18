@@ -3,16 +3,14 @@ Caching support.
 """
 
 import collections
+from importlib import metadata
 import logging
 import time
-
-import pkg_resources
-
 
 logger = logging.getLogger("uwhoisd")
 
 
-class UnknownCache(Exception):
+class UnknownCacheError(Exception):
     """
     The supplied cache type name cannot be found.
     """
@@ -26,12 +24,12 @@ def get_cache(cfg):
     if cache_name == "null":
         logger.info("Caching deactivated")
         return None
-    for ep in pkg_resources.iter_entry_points("uwhoisd.cache"):
+    for ep in metadata.entry_points("uwhoisd.cache"):
         if ep.name == cache_name:
             logger.info("Using cache '%s' with the parameters %r", cache_name, cfg)
             cache_type = ep.load()
             return cache_type(**cfg)
-    raise UnknownCache(cache_name)
+    raise UnknownCacheError(cache_name)
 
 
 def wrap_whois(cache, whois_func):
@@ -54,7 +52,7 @@ def wrap_whois(cache, whois_func):
 
 
 # pylint: disable-msg=R0924
-class LFU(object):
+class LFU:
     """
     A simple LFU cache.
     """
@@ -81,7 +79,7 @@ class LFU(object):
         :param max_age int:  Maximum number of seconds to consider an entry
                              live.
         """
-        super(LFU, self).__init__()
+        super().__init__()
         self.cache = {}
         self.queue = collections.deque()
         self.max_size = int(max_size)

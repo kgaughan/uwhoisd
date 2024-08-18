@@ -13,7 +13,6 @@ from tornado.tcpserver import TCPServer
 
 from . import utils
 
-
 logger = logging.getLogger("uwhoisd")
 
 
@@ -24,7 +23,7 @@ def handle_signal(sig, frame):
     IOLoop.instance().add_callback(IOLoop.instance().stop)
 
 
-class WhoisClient(object):
+class WhoisClient:
     """
     Whois client.
     """
@@ -60,7 +59,7 @@ class WhoisClient(object):
         to_return = ""
         try:
             bytes_whois = b""
-            self.sock.sendall("{0}\r\n".format(query).encode())
+            self.sock.sendall(f"{query}\r\n".encode())
             while True:
                 if data := self.sock.recv(2048):
                     bytes_whois += data
@@ -69,7 +68,7 @@ class WhoisClient(object):
             to_return = str(bytes_whois, "utf-8", "ignore")
         except OSError as e:
             # Catches all socket.* exceptions
-            return "{0}: {1}\n".format(self.server, e)
+            return f"{self.server}: {e}\n"
         except Exception:
             logger.exception("Unknown exception when querying '%s'", query)
         return to_return
@@ -84,7 +83,7 @@ class WhoisListener(TCPServer):
         """
         Listen to queries from whois clients.
         """
-        super(WhoisListener, self).__init__()
+        super().__init__()
         self.whois = whois
 
     @gen.coroutine
@@ -96,12 +95,10 @@ class WhoisListener(TCPServer):
         try:
             whois_query = yield self.stream.read_until_regex(b"\n")
             whois_query = whois_query.decode().strip().lower()
-            whois_entry = (
-                self.whois(whois_query)
-                if utils.is_well_formed_fqdn(whois_query)
-                else "; Bad request: '{0}'\r\n".format(whois_query)
-            )
-
+            if not utils.is_well_formed_fqdn(whois_query):
+                whois_entry = f"; Bad request: '{whois_query}'\r\n"
+            else:
+                whois_entry = self.whois(whois_query)
             yield self.stream.write(whois_entry.encode())
         except tornado.iostream.StreamClosedError:
             logger.warning("Connection closed by %s.", address)

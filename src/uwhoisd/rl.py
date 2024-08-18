@@ -7,12 +7,12 @@ import time
 
 
 @functools.total_ordering
-class TokenBucket(object):
+class TokenBucket:
     """
     A token bucket.
     """
 
-    __slots__ = ("ts", "rate", "limit", "_available")
+    __slots__ = ["ts", "rate", "limit", "_available"]
 
     clock = staticmethod(time.time)
 
@@ -23,7 +23,7 @@ class TokenBucket(object):
         :param rate int: Token refill rate (per second) of bucket.
         :param limit int: Maximum number of tokens the bucket can contain.
         """
-        super(TokenBucket, self).__init__()
+        super().__init__()
         self.ts = self.clock()
         self.rate = rate
         self.limit = limit
@@ -48,9 +48,7 @@ class TokenBucket(object):
         """
         ts = self.clock()
         if self._available < self.limit:
-            self._available += min(
-                (ts - self.ts) * self.rate, self.limit - self._available
-            )
+            self._available += min((ts - self.ts) * self.rate, self.limit - self._available)
         self.ts = ts
         return self._available
 
@@ -61,9 +59,7 @@ class TokenBucket(object):
         return self.ts < other.ts
 
     def __getstate__(self):
-        return dict(
-            zip(self.__slots__, [getattr(self, attr) for attr in self.__slots__])
-        )
+        return dict(zip(self.__slots__, [getattr(self, attr) for attr in self.__slots__]))
 
     def __setstate__(self, state):
         for k in self.__slots__:

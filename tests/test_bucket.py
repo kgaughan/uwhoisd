@@ -1,6 +1,7 @@
 import pickle
 
 from uwhoisd import rl
+
 from . import utils
 
 
@@ -11,7 +12,7 @@ class TokenBucket(rl.TokenBucket):
 
     def __init__(self, rate, limit, clock=None):
         self.clock = utils.Clock() if clock is None else clock
-        super(TokenBucket, self).__init__(rate, limit)
+        super().__init__(rate, limit)
 
 
 def test_creation():
