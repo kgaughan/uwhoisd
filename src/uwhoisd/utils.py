@@ -61,7 +61,7 @@ def is_well_formed_fqdn(fqdn: str) -> bool:
 
 def split_fqdn(fqdn: str) -> t.List[str]:
     """Split an FQDN into the domain name and zone."""
-    return [] if not fqdn else fqdn.rstrip(".").split(".", 1)
+    return fqdn.rstrip(".").split(".", 1) if fqdn else []
 
 
 def decode_value(s: str) -> str:
