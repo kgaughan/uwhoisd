@@ -70,6 +70,7 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
         zone = munge_zone(link.string)
         # If we've already scraped this TLD, ignore it.
         if zone in existing:
+            yield (zone, existing[zone])
             continue
 
         # Is this a zone we should skip/ignore?
@@ -131,12 +132,10 @@ def main():
 
     whois_servers = {} if args.full else parser.get_section_dict("overrides")
     logging.info("Starting scrape of %s", ROOT_ZONE_DB)
+    print("[overrides]")
     for zone, whois_server in scrape_whois_from_iana(ROOT_ZONE_DB, whois_servers):
         logging.info("Scraped .%s: %s", zone, whois_server)
-        whois_servers[zone] = whois_server
-    print("[overrides]")
-    for zone in sorted(whois_servers):
-        print(f"{zone}={whois_servers[zone]}")
+        print(f"{zone}={whois_server}")
 
     if args.ipv4:
         print("[ipv4_assignments]")
