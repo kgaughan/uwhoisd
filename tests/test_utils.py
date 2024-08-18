@@ -1,3 +1,5 @@
+import pytest
+
 from uwhoisd import utils
 
 
@@ -32,11 +34,9 @@ def test_decode_value():
     assert utils.decode_value('"foo"') == "foo"
     assert utils.decode_value('"foo\nbar"') == "foo\nbar"
     assert utils.decode_value("foo\nbar") == "foo\nbar"
+    assert utils.decode_value('""') == ""
+    assert utils.decode_value("''") == ""
 
     for bad_value in ['"foo', "'foo", "\"foo'"]:
-        try:
+        with pytest.raises(ValueError, match="The trailing quote be present and match the leading quote."):
             utils.decode_value(bad_value)
-        except ValueError as exc:
-            assert exc.args[0] == "The trailing quote be present and match the leading quote."
-        else:
-            raise AssertionError(f"No exception raised for: {bad_value}")
