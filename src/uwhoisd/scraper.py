@@ -30,18 +30,15 @@ def fetch_ipv4_assignments(url: str):
     res = requests.get(url, stream=False, timeout=10)
     root = etree.fromstring(res.text)
     for record in root.findall("assignments:record", NSS):
-        status_elem = record.find("assignments:status", NSS)
-        if status_elem is None or status_elem.text not in ("ALLOCATED", "LEGACY"):
+        status = record.findtext("assignments:status", default="", namespaces=NSS)
+        if status not in ("ALLOCATED", "LEGACY"):
             continue
-        prefix_elem = record.find("assignments:prefix", NSS)
-        whois_elem = record.find("assignments:whois", NSS)
-        if prefix_elem is None or whois_elem is None:
-            continue
-        prefix = prefix_elem.text or ""
+        prefix = record.findtext("assignments:prefix", default="", namespaces=NSS)
         prefix, _ = prefix.lstrip("0").split("/", 1)
-        if prefix == "":
+        whois = record.findtext("assignments:whois", default="", namespaces=NSS)
+        if prefix == "" or whois == "":
             continue
-        yield prefix, whois_elem.text
+        yield prefix, whois
 
 
 def fetch(session: requests.Session, url: str):
@@ -69,7 +66,7 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
     body = fetch(session, root_zone_db_url)
 
     for link in body.select("#tld-table .tld a"):
-        if "href" not in link.attrs:
+        if "href" not in link.attrs or link.string is None:
             continue
 
         zone = munge_zone(link.string)
