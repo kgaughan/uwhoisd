@@ -137,6 +137,12 @@ exclude_lines = [
 [tool.coverage.html]
 directory = "coverage_html_report"
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/uwhoisd",
+  "extra",
+]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
