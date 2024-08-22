@@ -35,3 +35,15 @@ def test_extract_whois_server_not_found():
     body = bs4.BeautifulSoup("<html><body></body></html>", "html.parser")
     result = scraper.extract_whois_server(body)
     assert result is None
+
+
+def test_extract_whois_server_empty_sibling():
+    body = bs4.BeautifulSoup("<html><body><b>WHOIS Server:</b> </body></html>", "html.parser")
+    result = scraper.extract_whois_server(body)
+    assert result is None
+
+
+def test_extract_whois_server_no_sibling():
+    body = bs4.BeautifulSoup("<html><body><b>WHOIS Server:</b></body></html>", "html.parser")
+    result = scraper.extract_whois_server(body)
+    assert result is None

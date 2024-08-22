@@ -106,9 +106,10 @@ def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[
 
 def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
     whois_server_label = body.find("b", string="WHOIS Server:")
-    if whois_server_label is not None and whois_server_label.next_sibling is not None:
-        return whois_server_label.next_sibling.text.strip().lower()
-    return None
+    if whois_server_label is None or whois_server_label.next_sibling is None:
+        return None
+    server = whois_server_label.next_sibling.text.strip().lower()
+    return None if server == "" else server
 
 
 def make_arg_parser() -> argparse.ArgumentParser:
