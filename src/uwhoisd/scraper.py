@@ -40,7 +40,7 @@ def fetch_ipv4_assignments(url: str):
             yield prefix, whois
 
 
-def fetch(session: requests.Session, url: str):
+def fetch(session: requests.Session, url: str) -> BeautifulSoup:
     """
     Fetch a URL and parse it with Beautiful Soup for scraping.
     """
@@ -55,7 +55,7 @@ def munge_zone(zone: str) -> str:
     return zone.strip("\u200e\u200f.").encode("idna").decode().lower()
 
 
-def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]):
+def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]) -> t.Iterator[t.Tuple[str, str]]:
     """
     Scrape IANA's root zone database for WHOIS servers.
     """
@@ -64,46 +64,52 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
     logging.info("Scraping %s", root_zone_db_url)
     body = fetch(session, root_zone_db_url)
 
-    for link in body.select("#tld-table .tld a"):
-        if "href" not in link.attrs or link.string is None:
-            continue
-
-        zone = munge_zone(link.string)
+    for zone, zone_url in extract_zone_urls(root_zone_db_url, body):
         # If we've already scraped this TLD, ignore it.
         if zone in existing:
             yield (zone, existing[zone])
             continue
 
-        # Is this a zone we should skip/ignore?
-        row = link.parent.parent.parent.findChildren("td")
-        if row[1].string == "test":
-            continue
-        if row[2].string in ("Not assigned", "Retired"):
-            continue
-
-        zone_url = urljoin(root_zone_db_url, link.attrs["href"])
         logging.info("Scraping %s", zone_url)
         body = fetch(session, zone_url)
-
-        whois_server_label = body.find("b", string="WHOIS Server:")
-        whois_server = ""
-        if whois_server_label is not None:
-            whois_server = whois_server_label.next_sibling.strip().lower()
-
+        whois_server = extract_whois_server(body)
         # Fallback to trying whois.nic.*
-        if whois_server == "":
+        if whois_server is None:
             whois_server = f"whois.nic.{zone}"
             logging.info("Trying fallback server: %s", whois_server)
             try:
                 socket.gethostbyname(whois_server)
             except socket.gaierror:
-                whois_server = ""
+                logging.info("No WHOIS server found for %s", zone)
+                continue
 
-        if whois_server == "":
-            logging.info("No WHOIS server found for %s", zone)
-        else:
-            logging.info("WHOIS server for %s is %s", zone, whois_server)
-            yield (zone, whois_server)
+        logging.info("WHOIS server for %s is %s", zone, whois_server)
+        yield (zone, whois_server)
+
+
+def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[str, str]]:
+    for link in body.select("#tld-table .tld a"):
+        if "href" not in link.attrs or link.string is None:  # pragma: no cover
+            continue
+        row = link.find_parent("tr")
+        if row is None:  # pragma: no cover
+            continue
+        tds = row.find_all("td")
+        # Is this a zone we should skip/ignore?
+        if tds[1].string == "test":
+            continue
+        if tds[2].string in ("Not assigned", "Retired"):
+            continue
+
+        yield (munge_zone(link.string), urljoin(base_url, link.attrs["href"]))
+
+
+def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
+    whois_server_label = body.find("b", string="WHOIS Server:")
+    if whois_server_label is None or whois_server_label.next_sibling is None:
+        return None
+    server = whois_server_label.next_sibling.text.strip().lower()
+    return None if server == "" else server
 
 
 def make_arg_parser() -> argparse.ArgumentParser:
