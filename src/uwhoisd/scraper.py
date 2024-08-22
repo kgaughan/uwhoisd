@@ -40,7 +40,7 @@ def fetch_ipv4_assignments(url: str):
             yield prefix, whois
 
 
-def fetch(session: requests.Session, url: str):
+def fetch(session: requests.Session, url: str) -> BeautifulSoup:
     """
     Fetch a URL and parse it with Beautiful Soup for scraping.
     """
@@ -89,10 +89,10 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
 
 def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[str, str]]:
     for link in body.select("#tld-table .tld a"):
-        if "href" not in link.attrs or link.string is None:
+        if "href" not in link.attrs or link.string is None:  # pragma: no cover
             continue
         row = link.find_parent("tr")
-        if row is None:
+        if row is None:  # pragma: no cover
             continue
         tds = row.find_all("td")
         # Is this a zone we should skip/ignore?
