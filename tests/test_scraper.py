@@ -1,6 +1,7 @@
 from os import path
 
 import bs4
+import pytest
 
 from uwhoisd import scraper
 
@@ -31,19 +32,15 @@ def test_extract_whois_server():
     assert result == "whois.nic.abc"
 
 
-def test_extract_whois_server_not_found():
-    body = bs4.BeautifulSoup("<html><body></body></html>", "html.parser")
-    result = scraper.extract_whois_server(body)
-    assert result is None
-
-
-def test_extract_whois_server_empty_sibling():
-    body = bs4.BeautifulSoup("<html><body><b>WHOIS Server:</b> </body></html>", "html.parser")
-    result = scraper.extract_whois_server(body)
-    assert result is None
-
-
-def test_extract_whois_server_no_sibling():
-    body = bs4.BeautifulSoup("<html><body><b>WHOIS Server:</b></body></html>", "html.parser")
+@pytest.mark.parametrize(
+    "fragment",
+    [
+        "<html><body></body></html>",
+        "<html><body><b>WHOIS Server:</b> </body></html>",
+        "<html><body><b>WHOIS Server:</b></body></html>",
+    ],
+)
+def test_extract_whois_server_no_matches(fragment):
+    body = bs4.BeautifulSoup(fragment, "html.parser")
     result = scraper.extract_whois_server(body)
     assert result is None
