@@ -17,3 +17,10 @@ def test_extract_zone_urls():
         ("bt", "http://example.com/domains/root/db/bt.html"),
         ("xxx", "http://example.com/domains/root/db/xxx.html"),
     ]
+
+
+def test_extract_whois_server():
+    with open(path.join(path.dirname(__file__), "zone-info-fragment.html"), encoding="utf-8") as fh:
+        body = bs4.BeautifulSoup(fh, "html.parser")
+    result = scraper.extract_whois_server(body)
+    assert result == "whois.nic.abc"

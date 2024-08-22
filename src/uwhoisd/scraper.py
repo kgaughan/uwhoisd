@@ -72,26 +72,19 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
 
         logging.info("Scraping %s", zone_url)
         body = fetch(session, zone_url)
-
-        whois_server_label = body.find("b", string="WHOIS Server:")
-        whois_server = ""
-        if whois_server_label is not None:
-            whois_server = whois_server_label.next_sibling.strip().lower()
-
+        whois_server = extract_whois_server(body)
         # Fallback to trying whois.nic.*
-        if whois_server == "":
+        if whois_server is None:
             whois_server = f"whois.nic.{zone}"
             logging.info("Trying fallback server: %s", whois_server)
             try:
                 socket.gethostbyname(whois_server)
             except socket.gaierror:
-                whois_server = ""
+                logging.info("No WHOIS server found for %s", zone)
+                continue
 
-        if whois_server == "":
-            logging.info("No WHOIS server found for %s", zone)
-        else:
-            logging.info("WHOIS server for %s is %s", zone, whois_server)
-            yield (zone, whois_server)
+        logging.info("WHOIS server for %s is %s", zone, whois_server)
+        yield (zone, whois_server)
 
 
 def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[str, str]]:
@@ -109,6 +102,13 @@ def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[
             continue
 
         yield (munge_zone(link.string), urljoin(base_url, link.attrs["href"]))
+
+
+def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
+    whois_server_label = body.find("b", string="WHOIS Server:")
+    if whois_server_label is not None and whois_server_label.next_sibling is not None:
+        return whois_server_label.next_sibling.text.strip().lower()
+    return None
 
 
 def make_arg_parser() -> argparse.ArgumentParser:
