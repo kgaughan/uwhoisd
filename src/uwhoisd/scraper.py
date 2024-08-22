@@ -55,7 +55,7 @@ def munge_zone(zone: str) -> str:
     return zone.strip("\u200e\u200f.").encode("idna").decode().lower()
 
 
-def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]):
+def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]) -> t.Iterator[t.Tuple[str, str]]:
     """
     Scrape IANA's root zone database for WHOIS servers.
     """
@@ -64,24 +64,12 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
     logging.info("Scraping %s", root_zone_db_url)
     body = fetch(session, root_zone_db_url)
 
-    for link in body.select("#tld-table .tld a"):
-        if "href" not in link.attrs or link.string is None:
-            continue
-
-        zone = munge_zone(link.string)
+    for zone, zone_url in extract_zone_urls(root_zone_db_url, body):
         # If we've already scraped this TLD, ignore it.
         if zone in existing:
             yield (zone, existing[zone])
             continue
 
-        # Is this a zone we should skip/ignore?
-        row = link.parent.parent.parent.findChildren("td")
-        if row[1].string == "test":
-            continue
-        if row[2].string in ("Not assigned", "Retired"):
-            continue
-
-        zone_url = urljoin(root_zone_db_url, link.attrs["href"])
         logging.info("Scraping %s", zone_url)
         body = fetch(session, zone_url)
 
@@ -104,6 +92,23 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
         else:
             logging.info("WHOIS server for %s is %s", zone, whois_server)
             yield (zone, whois_server)
+
+
+def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[str, str]]:
+    for link in body.select("#tld-table .tld a"):
+        if "href" not in link.attrs or link.string is None:
+            continue
+        row = link.find_parent("tr")
+        if row is None:
+            continue
+        tds = row.find_all("td")
+        # Is this a zone we should skip/ignore?
+        if tds[1].string == "test":
+            continue
+        if tds[2].string in ("Not assigned", "Retired"):
+            continue
+
+        yield (munge_zone(link.string), urljoin(base_url, link.attrs["href"]))
 
 
 def make_arg_parser() -> argparse.ArgumentParser:
