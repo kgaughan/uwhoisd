@@ -1,18 +1,33 @@
-*.py[co]
-
-# Packages
-/dist
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+
+# Environments
+.venv/
+
+# Distribution/packaging
+dist/
 
 # Unit test / coverage reports
 .coverage
+htmlcov/
+tests/results.xml
 .*_cache/
-
-/tests/results.xml
 
 # General detritus
 *~
 .*.sw?
 *.orig
+*.bak
+*.log
 
-/src/uwhoisd/_version.py
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Mkdocs
+/site/
+
+# Other
+_version.py
