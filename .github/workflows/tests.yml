@@ -19,6 +19,8 @@ jobs:
         id: setup-rye
         with:
           version: "0.39.0"
+          enable-cache: true
+          cache-prefix: "rye-lint"
       - name: Run formatting check
         run: rye fmt --check
       - name: Run linters
