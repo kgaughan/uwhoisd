@@ -1,0 +1,44 @@
+---
+name: Tests
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v4.2.0
+        id: setup-rye
+        with:
+          version: "0.39.0"
+      - name: Run formatting check
+        run: rye fmt --check
+      - name: Run linters
+        run: rye lint
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: 
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v4.2.0
+      - name: Install Python ${{ matrix.python-version }}
+        run: rye pin ${{ matrix.python-version }}
+      - name: Run tests
+        run: rye test
