@@ -15,12 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: eifinger/setup-rye@v4.2.3
-        id: setup-rye
-        with:
-          version: "0.39.0"
-          enable-cache: true
-          cache-prefix: "rye-lint"
+      - uses: sksat/setup-rye@v0.28.0
       - name: Run formatting check
         run: rye fmt --check
       - name: Run linters
@@ -39,7 +34,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: eifinger/setup-rye@v4.2.3
+      - uses: sksat/setup-rye@v0.28.0
       - name: Install Python ${{ matrix.python-version }}
         run: rye pin ${{ matrix.python-version }}
       - name: Run tests
