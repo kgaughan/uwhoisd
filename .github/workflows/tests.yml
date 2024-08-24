@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: eifinger/setup-rye@v4.2.0
+      - uses: eifinger/setup-rye@v4.2.3
         id: setup-rye
         with:
           version: "0.39.0"
