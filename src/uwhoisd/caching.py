@@ -52,7 +52,6 @@ def wrap_whois(cache, whois_func):
     return wrapped
 
 
-# pylint: disable-msg=R0924
 class LFU:
     """A simple LFU cache.
 
