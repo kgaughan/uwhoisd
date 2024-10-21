@@ -2,6 +2,7 @@
 A 'universal' WHOIS proxy server.
 """
 
+import asyncio
 import configparser
 import logging
 import logging.config
@@ -10,7 +11,7 @@ import re
 import socket
 import sys
 
-from . import caching, net, utils
+from . import caching, client, server, utils
 
 USAGE = "Usage: %s <config>"
 
@@ -90,7 +91,7 @@ class UWhois:
         """
         return self.prefixes[zone] if zone in self.prefixes else ""
 
-    def whois(self, query):
+    async def whois(self, query: str) -> str:
         """
         Query the appropriate WHOIS server.
         """
@@ -103,9 +104,8 @@ class UWhois:
 
         # Query the registry's WHOIS server.
         server, port = self.get_whois_server(zone)
-        with net.WhoisClient(server, port) as client:
-            logger.info("Querying %s about %s", server, query)
-            response = client.whois(self.get_prefix(zone) + query)
+        logger.info("Querying %s about %s", server, query)
+        response = await client.query_whois(server, port, self.get_prefix(zone) + query)
 
         # Thin registry? Query the registrar's WHOIS server.
         if zone in self.recursion_patterns:
@@ -116,9 +116,8 @@ class UWhois:
                 elif self.page_feed:
                     # A form feed character so it's possible to find the split.
                     response += "\f"
-                with net.WhoisClient(server, port) as client:
-                    logger.info("Recursive query to %s about %s", server, query)
-                    response += client.whois(query)
+                logger.info("Recursive query to %s about %s", server, query)
+                response += await client.query_whois(server, port, query)
 
         return response
 
@@ -150,9 +149,12 @@ def main():
         logger.exception("Could not parse config file")
         return 1
     else:
-        net.start_service(iface, port, whois)
+        asyncio.run(server.start_service(iface, port, whois))
         return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        pass

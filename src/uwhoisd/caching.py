@@ -40,10 +40,10 @@ def wrap_whois(cache, whois_func):
     if cache is None:
         return whois_func
 
-    def wrapped(query):
+    async def wrapped(query):
         response = cache.get(query)
         if response is None:
-            response = whois_func(query)
+            response = await whois_func(query)
             cache.set(query, response)
         else:
             logger.info("Cache hit for '%s'", query)
@@ -52,21 +52,19 @@ def wrap_whois(cache, whois_func):
     return wrapped
 
 
-# pylint: disable-msg=R0924
 class LFU:
-    """
-    A simple LFU cache.
+    """A simple LFU cache.
+
+    The eviction queue contains 2-tuples consisting of the time the item was
+    put into the cache and the cache key. The cache maps cache keys onto
+    2-tuples consisting of a counter giving the number of times this item
+    occurs on the eviction queue and the value.
+
     """
 
-    # This is implemented as an LFU cache. The eviction queue contains
-    # 2-tuples consisting of the time the item was put into the cache and the
-    # cache key. The cache maps cache keys onto 2-tuples consisting of a
-    # counter giving the number of times this item occurs on the eviction queue
-    # and the value.
-    #
-    # I may end up reimplementing this as an LRU cache if it turns out that's
-    # more apt, but I haven't went that route as an LRU cache is somewhat more
-    # awkward and involved to implement correctly.
+    # I may end up reimplementing an LRU cache if it turns out that's more apt,
+    # but I haven't went that route as an LRU cache is somewhat more awkward
+    # and involved to implement correctly.
 
     __slots__ = ("cache", "max_age", "max_size", "queue")
 
