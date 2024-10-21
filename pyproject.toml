@@ -30,7 +30,6 @@ classifiers = [
   "Topic :: System :: Networking",
 ]
 dependencies = [
-  "netaddr>=1.3.0",
   "beautifulsoup4>=4.12.3",
   "requests>=2.32.3",
 ]
@@ -118,11 +117,12 @@ ignore = [
   "PLW2901",
   "S310",
   "S317",
-  "T201",  # Allow print
+  "T201",    # Allow print
   "TID252",
   "UP006",
   "UP035",
   "EM101",
+  "N817",
 ]
 
 [tool.ruff.lint.isort]
