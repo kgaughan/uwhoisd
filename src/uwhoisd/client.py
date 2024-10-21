@@ -9,7 +9,7 @@ async def query_whois(host: str, port: int, query: str) -> str:
     writer.write(f"{query}\r\n".encode())
     await writer.drain()
 
-    response = await reader.read()
+    response = await asyncio.wait_for(reader.read(), timeout=5)
 
     writer.close()
     await writer.wait_closed()

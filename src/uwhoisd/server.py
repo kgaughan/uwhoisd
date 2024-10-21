@@ -17,7 +17,10 @@ async def start_service(iface: str, port: int, whois):
         if not utils.is_well_formed_fqdn(cleaned):
             result = f"; Bad query: '{cleaned}'\r\n"
         else:
-            result = await whois(cleaned)
+            try:
+                result = await whois(cleaned)
+            except asyncio.TimeoutError:
+                result = "; Timeout from upstream server\r\n"
         writer.write(result.encode())
         await writer.drain()
         writer.close()
