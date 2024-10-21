@@ -5,7 +5,14 @@ from . import utils
 
 async def start_service(iface: str, port: int, whois):
     async def handle_request(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        query = await reader.readuntil(b"\r\n")
+        try:
+            query = await asyncio.wait_for(reader.readuntil(b"\r\n"), timeout=5)
+        except asyncio.TimeoutError:
+            writer.write(b"; Query timeout: closing\r\n")
+            await writer.drain()
+            writer.close()
+            return
+
         cleaned = query.decode().strip().lower()
         if not utils.is_well_formed_fqdn(cleaned):
             result = f"; Bad query: '{cleaned}'\r\n"
