@@ -10,7 +10,7 @@ dynamic = ["version"]
 description = "Universal domain WHOIS proxy server"
 license = { file = "LICENSE" }
 authors = [{ name = "Keith Gaughan", email = "k@stereochro.me" }]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 readme = "README.md"
 keywords = []
 classifiers = [
@@ -20,10 +20,11 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Internet",
@@ -46,7 +47,7 @@ uwhoisd-scraper = "uwhoisd.scraper:main"
 [project.entry-points."uwhoisd.cache"]
 lfu = "uwhoisd.caching:LFU"
 
-[tool.rye]
+[tool.uv]
 dev-dependencies = [
   "mypy>=1.11.1",
   "coverage>=7.6.1",
@@ -55,14 +56,12 @@ dev-dependencies = [
   "types-beautifulsoup4>=4.12.0.20240511",
   "types-requests>=2.32.0.20240712",
 ]
-universal = true
-generate-hashes = true
 managed = true
 
 [tool.hatch.build.targets.sdist]
 include = [
   "/src/uwhoisd",
-  "/requirements.lock",
+  "/uv.lock",
   "/extra",
 ]
 
