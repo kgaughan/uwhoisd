@@ -28,10 +28,10 @@ class UWhois:
     __slots__ = (
         "conservative",
         "overrides",
+        "page_feed",
         "prefixes",
         "recursion_patterns",
         "registry_whois",
-        "page_feed",
         "suffix",
     )
 

@@ -12,7 +12,12 @@ class TokenBucket:
     A token bucket.
     """
 
-    __slots__ = ["ts", "rate", "limit", "_available"]
+    __slots__ = [
+        "_available",
+        "limit",
+        "rate",
+        "ts",
+    ]
 
     clock = staticmethod(time.time)
 
