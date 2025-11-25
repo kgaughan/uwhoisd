@@ -2,11 +2,9 @@
 Rate limiting.
 """
 
-import functools
 import time
 
 
-@functools.total_ordering
 class TokenBucket:
     """
     A token bucket.

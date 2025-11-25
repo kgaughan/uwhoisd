@@ -38,5 +38,5 @@ def test_decode_value():
     assert utils.decode_value("''") == ""
 
     for bad_value in ['"foo', "'foo", "\"foo'"]:
-        with pytest.raises(ValueError, match="The trailing quote be present and match the leading quote."):
+        with pytest.raises(ValueError, match=r"The trailing quote be present and match the leading quote\."):
             utils.decode_value(bad_value)

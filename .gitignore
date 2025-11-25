@@ -11,7 +11,7 @@ dist/
 # Unit test / coverage reports
 .coverage
 htmlcov/
-tests/results.xml
+results.xml
 .*_cache/
 
 # General detritus
