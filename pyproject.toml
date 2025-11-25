@@ -8,11 +8,11 @@ build-backend = "hatchling.build"
 name = "uwhoisd"
 dynamic = ["version"]
 description = "Universal domain WHOIS proxy server"
-license = { file = "LICENSE" }
-authors = [{ name = "Keith Gaughan", email = "k@stereochro.me" }]
-requires-python = ">=3.9"
 readme = "README.md"
-keywords = []
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Keith Gaughan", email = "k@stereochro.me" }]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Environment :: No Input/Output (Daemon)",
@@ -47,8 +47,8 @@ uwhoisd-scraper = "uwhoisd.scraper:main"
 [project.entry-points."uwhoisd.cache"]
 lfu = "uwhoisd.caching:LFU"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
   "mypy>=1.11.1",
   "coverage>=7.6.1",
   "pytest>=8.3.2",
@@ -56,13 +56,12 @@ dev-dependencies = [
   "types-beautifulsoup4>=4.12.0.20240511",
   "types-requests>=2.32.0.20240712",
 ]
-managed = true
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "/src/uwhoisd",
-  "/uv.lock",
-  "/extra",
+  "src/uwhoisd",
+  "uv.lock",
+  "extra",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -80,47 +79,65 @@ line-length = 120
 [tool.ruff]
 target-version = "py39"
 line-length = 120
-src = ["src", "test"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
   "A",
+  # "ANN",
   "ARG",
   "B",
   "C",
   "DTZ",
   "E",
   "EM",
+  "EXE",
   "F",
   "FBT",
+  "FLY",
+  "FURB",
+  "G",
   "I",
   "ICN",
   "ISC002",
+  "LOG",
   "N",
+  "PERF",
+  "PIE",
   "PLC",
   "PLE",
   "PLR",
   "PLW",
+  # "PT",
+  "PYI",
   "Q",
+  "RET",
+  "RSE",
   "RUF",
   "S",
+  "SIM",
+  "SLOT",
   "T",
+  "TC",
   "TID",
+  "TRY",
   "UP",
   "W",
   "YTT",
 ]
 ignore = [
-  "PLR0913",
-  "PLR2004",
-  "PLW2901",
-  "S310",
-  "S317",
+  "PLR0913", # Too many arguments
+  "PLR2004", # Magic value used in comparison
+  "PLW2901", # Redefined loop variable
+  "S310",    # Audit URL open for permitted schemes
+  "S317",    # Using xml to parse untrusted data is known to be vulnerable to XML attacks; use defusedxml equivalents
+  "TID252",  # Prefer absolute imports over relative imports from parent modules
+  "UP006",   # Use {to} instead of {from} for type annotation
+  "UP035",   # Deprecated import
+  "EM101",   # Exceptions must not use strings
+  "EM102",   # Exception must not use f-string literal
+  "TRY003",  # Avoid specifying long messages outside the exception class
   "T201",    # Allow print
-  "TID252",
-  "UP006",
-  "UP035",
-  "EM101",
   "N817",
 ]
 
@@ -132,13 +149,15 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 # Tests can use magic values, assertions, and relative imports
-"tests/**/*" = ["PLR2004", "S101", "TID252", "E501"]
+"tests/**/*" = ["ANN", "PLR2004", "S101", "TID252", "E501"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --cov=src/uwhoisd --junitxml=tests/results.xml --cov-report html"
+addopts = "-ra -q --doctest-modules --cov=uwhoisd --junitxml=results.xml --cov-report html"
 junit_logging = "out-err"
 junit_family = "xunit2"
+pythonpath = ["src"]
+testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true

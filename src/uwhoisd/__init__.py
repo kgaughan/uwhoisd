@@ -4,6 +4,7 @@ A 'universal' WHOIS proxy server.
 
 import asyncio
 import configparser
+import contextlib
 import logging
 import logging.config
 import os.path
@@ -61,16 +62,13 @@ class UWhois:
             setattr(self, section, parser.get_section_dict(section))
 
         for zone, pattern in parser.items("recursion_patterns"):
-            self.recursion_patterns[zone] = re.compile(utils.decode_value(pattern), re.I)
+            self.recursion_patterns[zone] = re.compile(utils.decode_value(pattern), re.IGNORECASE)
 
     def get_whois_server(self, zone):
         """
         Get the WHOIS server for the given zone.
         """
-        if zone in self.overrides:
-            server = self.overrides[zone]
-        else:
-            server = f"{zone}.{self.suffix}"
+        server = self.overrides.get(zone, f"{zone}.{self.suffix}")
         if ":" in server:
             server, port = server.split(":", 1)
             port = int(port)
@@ -89,7 +87,7 @@ class UWhois:
         """
         Get the prefix required when querying the servers for the given zone.
         """
-        return self.prefixes[zone] if zone in self.prefixes else ""
+        return self.prefixes.get(zone, "")
 
     async def whois(self, query: str) -> str:
         """
@@ -154,7 +152,5 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         sys.exit(main())
-    except KeyboardInterrupt:
-        pass

@@ -20,7 +20,7 @@ ROOT_ZONE_DB = "https://www.iana.org/domains/root/db"
 
 NSS = {"assignments": "http://www.iana.org/assignments"}
 
-logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 def fetch_ipv4_assignments(url: str):
@@ -61,7 +61,7 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
     """
     session = requests.Session()
 
-    logging.info("Scraping %s", root_zone_db_url)
+    logger.info("Scraping %s", root_zone_db_url)
     body = fetch(session, root_zone_db_url)
 
     for zone, zone_url in extract_zone_urls(root_zone_db_url, body):
@@ -70,20 +70,20 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
             yield (zone, existing[zone])
             continue
 
-        logging.info("Scraping %s", zone_url)
+        logger.info("Scraping %s", zone_url)
         body = fetch(session, zone_url)
         whois_server = extract_whois_server(body)
         # Fallback to trying whois.nic.*
         if whois_server is None:
             whois_server = f"whois.nic.{zone}"
-            logging.info("Trying fallback server: %s", whois_server)
+            logger.info("Trying fallback server: %s", whois_server)
             try:
                 socket.gethostbyname(whois_server)
             except socket.gaierror:
-                logging.info("No WHOIS server found for %s", zone)
+                logger.info("No WHOIS server found for %s", zone)
                 continue
 
-        logging.info("WHOIS server for %s is %s", zone, whois_server)
+        logger.info("WHOIS server for %s is %s", zone, whois_server)
         yield (zone, whois_server)
 
 
@@ -133,15 +133,17 @@ def main():
     """
     Driver for scraper.
     """
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+
     args = make_arg_parser().parse_args()
 
     parser = utils.make_config_parser(args.config)
 
     whois_servers = {} if args.full else parser.get_section_dict("overrides")
-    logging.info("Starting scrape of %s", ROOT_ZONE_DB)
+    logger.info("Starting scrape of %s", ROOT_ZONE_DB)
     print("[overrides]")
     for zone, whois_server in scrape_whois_from_iana(ROOT_ZONE_DB, whois_servers):
-        logging.info("Scraped .%s: %s", zone, whois_server)
+        logger.info("Scraped .%s: %s", zone, whois_server)
         print(f"{zone}={whois_server}")
 
     if args.ipv4:
@@ -149,7 +151,7 @@ def main():
         for prefix, whois_server in fetch_ipv4_assignments(IPV4_ASSIGNMENTS):
             print(f"{prefix}={whois_server}")
 
-    logging.info("Done")
+    logger.info("Done")
     return 0
 
 
