@@ -1,4 +1,4 @@
-app := "uwhosd"
+app := "uwhoisd"
 docker_repo := "ghcr.io/kgaughan/" + app
 
 [private]
