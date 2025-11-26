@@ -1,13 +1,16 @@
-"""
-Rate limiting.
-"""
+"""Rate limiting."""
 
+import functools
 import time
 
 
+@functools.total_ordering
 class TokenBucket:
-    """
-    A token bucket.
+    """A token bucket.
+
+    Args:
+        rate: token refill rate (per second) of bucket
+        limit: maximum number of tokens the bucket can contain
     """
 
     __slots__ = [
@@ -19,25 +22,21 @@ class TokenBucket:
 
     clock = staticmethod(time.time)
 
-    def __init__(self, rate, limit):
-        """
-        Create a new token bucket.
-
-        :param rate int: Token refill rate (per second) of bucket.
-        :param limit int: Maximum number of tokens the bucket can contain.
-        """
+    def __init__(self, rate: int, limit: int) -> None:
         super().__init__()
         self.ts = self.clock()
         self.rate = rate
         self.limit = limit
         self._available = limit
 
-    def consume(self, tokens):
-        """
-        Attempt to remove the given number of tokens from this bucket.
+    def consume(self, tokens: int) -> bool:
+        """Attempt to remove the given number of tokens from this bucket.
 
-        If there are enough tokens in the bucket to fulfil the request, we
-        return `True`, otherwise `False`.
+        Args:
+            tokens: number of tokens to consume
+
+        Returns:
+            `True` if the requested number could be consumed, otherwise `False`.
         """
         if 0 <= tokens <= self.tokens:
             self._available -= tokens
@@ -46,8 +45,10 @@ class TokenBucket:
 
     @property
     def tokens(self):
-        """
-        Gives the number of tokens available in this bucket.
+        """Gives the number of tokens available in this bucket.
+
+        Returns:
+            The number of available tokens.
         """
         ts = self.clock()
         if self._available < self.limit:
@@ -60,6 +61,9 @@ class TokenBucket:
 
     def __lt__(self, other):
         return self.ts < other.ts
+
+    def __hash__(self):
+        return hash((self._available, self.limit, self.rate, self.ts))
 
     def __getstate__(self):
         return dict(zip(self.__slots__, [getattr(self, attr) for attr in self.__slots__]))
