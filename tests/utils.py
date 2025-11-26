@@ -1,6 +1,4 @@
-"""
-Utility functions for testing.
-"""
+"""Utility functions for testing."""
 
 from os import path
 
@@ -11,9 +9,7 @@ HERE = path.dirname(__file__)
 
 
 class Clock:
-    """
-    A fake clock.
-    """
+    """A fake clock."""
 
     def __init__(self, initial: int = 0):
         super().__init__()
