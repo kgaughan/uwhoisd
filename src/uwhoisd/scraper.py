@@ -23,9 +23,14 @@ NSS = {"assignments": "http://www.iana.org/assignments"}
 logger = logging.getLogger(__name__)
 
 
-def fetch_ipv4_assignments(url: str):
-    """
-    Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
+def fetch_ipv4_assignments(url: str) -> t.Iterator[t.Tuple[str, str]]:
+    """Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
+
+    Args:
+        url: The URL of the IPv4 assignments XML file.
+
+    Yields:
+        Tuples of (prefix, whois server).
     """
     res = requests.get(url, stream=False, timeout=10)
     root = ET.fromstring(res.text)  # noqa: S314
@@ -41,23 +46,40 @@ def fetch_ipv4_assignments(url: str):
 
 
 def fetch(session: requests.Session, url: str) -> BeautifulSoup:
-    """
-    Fetch a URL and parse it with Beautiful Soup for scraping.
+    """Fetch a URL and parse it with Beautiful Soup for scraping.
+
+    Args:
+        session: The requests session to use.
+        url: The URL to fetch.
+
+    Returns:
+        The parsed HTML body.
     """
     return BeautifulSoup(session.get(url, stream=False, timeout=10).text, "html.parser")
 
 
 def munge_zone(zone: str) -> str:
-    """
-    Beat the zone text into an a-label.
+    """Beat the zone text into an a-label.
+
+    Args:
+        zone: The zone to clean up.
+
+    Returns:
+        The munged zone.
     """
     # The .strip() here is needed for RTL scripts like Arabic.
     return zone.strip("\u200e\u200f.").encode("idna").decode().lower()
 
 
 def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]) -> t.Iterator[t.Tuple[str, str]]:
-    """
-    Scrape IANA's root zone database for WHOIS servers.
+    """Scrape IANA's root zone database for WHOIS servers.
+
+    Args:
+        root_zone_db_url: The URL of the root zone database.
+        existing: A mapping of existing zones to WHOIS servers to skip.
+
+    Yields:
+        Tuples of (zone, whois server).
     """
     session = requests.Session()
 
@@ -88,6 +110,15 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
 
 
 def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[str, str]]:
+    """Extract zone URLs from the root zone database HTML.
+
+    Args:
+        base_url: The base URL of the root zone database.
+        body: The parsed HTML body.
+
+    Yields:
+        Tuples of (zone, zone URL).
+    """
     for link in body.select("#tld-table .tld a"):
         if "href" not in link.attrs or link.string is None:  # pragma: no cover
             continue
@@ -105,6 +136,14 @@ def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[
 
 
 def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
+    """Extract the WHOIS server from a zone HTML page.
+
+    Args:
+        body: The parsed HTML body.
+
+    Returns:
+        The WHOIS server, or `None` if not found.
+    """
     whois_server_label = body.find("b", string="WHOIS Server:")
     if whois_server_label is None or whois_server_label.next_sibling is None:
         return None
@@ -113,8 +152,10 @@ def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
 
 
 def make_arg_parser() -> argparse.ArgumentParser:
-    """
-    Create the argument parser.
+    """Create the argument parser.
+
+    Returns:
+        The argument parser.
     """
     parser = argparse.ArgumentParser(description="Scrap WHOIS data.")
     parser.add_argument("--config", help="uwhoisd configuration")
@@ -129,10 +170,8 @@ def make_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main():
-    """
-    Driver for scraper.
-    """
+def main() -> int:
+    """Driver for scraper."""
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
     args = make_arg_parser().parse_args()

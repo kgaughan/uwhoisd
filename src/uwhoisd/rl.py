@@ -13,12 +13,12 @@ class TokenBucket:
         limit: maximum number of tokens the bucket can contain
     """
 
-    __slots__ = [
+    __slots__ = (
         "_available",
         "limit",
         "rate",
         "ts",
-    ]
+    )
 
     clock = staticmethod(time.time)
 

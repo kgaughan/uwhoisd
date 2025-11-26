@@ -1,6 +1,4 @@
-"""
-A 'universal' WHOIS proxy server.
-"""
+"""A 'universal' WHOIS proxy server."""
 
 import asyncio
 import configparser
@@ -11,6 +9,7 @@ import os.path
 import re
 import socket
 import sys
+import typing as t
 
 from . import caching, client, server, utils
 
@@ -18,13 +17,11 @@ USAGE = "Usage: %s <config>"
 
 PORT = socket.getservbyname("whois", "tcp")
 
-logger = logging.getLogger("uwhoisd")
+logger = logging.getLogger(__name__)
 
 
 class UWhois:
-    """
-    Universal WHOIS proxy.
-    """
+    """Universal WHOIS proxy."""
 
     __slots__ = (
         "conservative",
@@ -36,22 +33,21 @@ class UWhois:
         "suffix",
     )
 
-    def __init__(self):
-        """
-        Initialise the proxy.
-        """
+    def __init__(self) -> None:
         super().__init__()
-        self.suffix = None
-        self.overrides = {}
-        self.prefixes = {}
-        self.recursion_patterns = {}
-        self.registry_whois = False
-        self.page_feed = True
-        self.conservative = ()
+        self.suffix: t.Optional[str] = None
+        self.overrides: dict[str, str] = {}
+        self.prefixes: dict[str, str] = {}
+        self.recursion_patterns: dict[str, re.Pattern] = {}
+        self.registry_whois: bool = False
+        self.page_feed: bool = True
+        self.conservative: t.Sequence = ()
 
-    def read_config(self, parser):
-        """
-        Read the configuration for this object from a config file.
+    def read_config(self, parser: utils.ConfigParser) -> None:
+        """Read the configuration for this object from a config file.
+
+        Args:
+            parser: The config parser to read from.
         """
         self.registry_whois = parser.get_bool("uwhoisd", "registry_whois")
         self.page_feed = parser.get_bool("uwhoisd", "page_feed")
@@ -64,34 +60,53 @@ class UWhois:
         for zone, pattern in parser.items("recursion_patterns"):
             self.recursion_patterns[zone] = re.compile(utils.decode_value(pattern), re.IGNORECASE)
 
-    def get_whois_server(self, zone):
-        """
-        Get the WHOIS server for the given zone.
+    def get_whois_server(self, zone: str) -> tuple[str, int]:
+        """Get the WHOIS server for the given zone.
+
+        Args:
+            zone: The zone to get the WHOIS server for.
+
+        Returns:
+            A tuple of the WHOIS server and port.
         """
         server = self.overrides.get(zone, f"{zone}.{self.suffix}")
         if ":" in server:
             server, port = server.split(":", 1)
-            port = int(port)
-        else:
-            port = PORT
-        return server, port
+            return server, int(port)
+        return server, PORT
 
-    def get_registrar_whois_server(self, zone, response):
-        """
-        Extract the registrar's WHOIS server from the registry response.
+    def get_registrar_whois_server(self, zone: str, response: str) -> t.Optional[str]:
+        """Extract the registrar's WHOIS server from the registry response.
+
+        Args:
+            zone: The zone being queried.
+            response: The response from the registry's WHOIS server.
+
+        Returns:
+            The registrar's WHOIS server, or None if not found.
         """
         matches = self.recursion_patterns[zone].search(response)
         return None if matches is None else matches.group("server")
 
-    def get_prefix(self, zone):
-        """
-        Get the prefix required when querying the servers for the given zone.
+    def get_prefix(self, zone: str) -> str:
+        """Get the prefix required when querying the servers for the given zone.
+
+        Args:
+            zone: The zone to get the prefix for.
+
+        Returns:
+            The prefix string.
         """
         return self.prefixes.get(zone, "")
 
     async def whois(self, query: str) -> str:
-        """
-        Query the appropriate WHOIS server.
+        """Query the appropriate WHOIS server.
+
+        Args:
+            query: The WHOIS query.
+
+        Returns:
+            The WHOIS response.
         """
         # Figure out the zone whose WHOIS server we're meant to be querying.
         for zone in self.conservative:
@@ -107,23 +122,21 @@ class UWhois:
 
         # Thin registry? Query the registrar's WHOIS server.
         if zone in self.recursion_patterns:
-            server = self.get_registrar_whois_server(zone, response)
-            if server is not None:
+            registrar_server = self.get_registrar_whois_server(zone, response)
+            if registrar_server is not None:
                 if not self.registry_whois:
                     response = ""
                 elif self.page_feed:
                     # A form feed character so it's possible to find the split.
                     response += "\f"
-                logger.info("Recursive query to %s about %s", server, query)
-                response += await client.query_whois(server, port, query)
+                logger.info("Recursive query to %s about %s", registrar_server, query)
+                response += await client.query_whois(registrar_server, port, query)
 
         return response
 
 
-def main():
-    """
-    Execute the daemon.
-    """
+def main() -> int:
+    """Execute the daemon."""
     if len(sys.argv) != 2:
         print(USAGE % os.path.basename(sys.argv[0]), file=sys.stderr)
         return 1
