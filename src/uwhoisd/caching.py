@@ -9,11 +9,33 @@ import typing as t
 logger = logging.getLogger(__name__)
 
 
+class Cache(t.Protocol):
+    """A WHOIS cache protocol."""
+
+    def get(self, key: str) -> t.Optional[str]:
+        """Retrieve a value from the cache.
+
+        Args:
+            key: The cache key to look up.
+
+        Returns:
+            The cached value, or `None` if not found.
+        """
+
+    def set(self, key: str, value: str) -> None:
+        """Store a value in the cache.
+
+        Args:
+            key: The cache key to store the value under.
+            value: The value to store.
+        """
+
+
 class UnknownCacheError(Exception):
     """The supplied cache type name cannot be found."""
 
 
-def get_cache(cfg: dict[str, str]) -> t.Optional["LFU"]:
+def get_cache(cfg: dict[str, str]) -> t.Optional[Cache]:
     """Attempt to load the configured cache.
 
     Args:
@@ -36,7 +58,10 @@ def get_cache(cfg: dict[str, str]) -> t.Optional["LFU"]:
     raise UnknownCacheError(cache_name)
 
 
-def wrap_whois(cache, whois_func):
+def wrap_whois(
+    cache: t.Optional[Cache],
+    whois_func: t.Callable[[str], t.Awaitable[str]],
+) -> t.Callable[[str], t.Awaitable[str]]:
     """Wrap a WHOIS query function with a cache.
 
     Args:
@@ -49,7 +74,7 @@ def wrap_whois(cache, whois_func):
     if cache is None:
         return whois_func
 
-    async def wrapped(query):
+    async def wrapped(query: str) -> str:
         response = cache.get(query)
         if response is None:
             response = await whois_func(query)

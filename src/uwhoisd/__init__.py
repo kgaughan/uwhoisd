@@ -41,7 +41,7 @@ class UWhois:
         self.recursion_patterns: dict[str, re.Pattern] = {}
         self.registry_whois: bool = False
         self.page_feed: bool = True
-        self.conservative: t.Sequence = ()
+        self.conservative: t.Sequence[str] = ()
 
     def read_config(self, parser: utils.ConfigParser) -> None:
         """Read the configuration for this object from a config file.

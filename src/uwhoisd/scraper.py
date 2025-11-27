@@ -1,6 +1,4 @@
-"""
-A scraper which pulls zone WHOIS servers from IANA's root zone database.
-"""
+"""A scraper which pulls zone WHOIS servers from IANA's root zone database."""
 
 import argparse
 import logging
@@ -23,7 +21,7 @@ NSS = {"assignments": "http://www.iana.org/assignments"}
 logger = logging.getLogger(__name__)
 
 
-def fetch_ipv4_assignments(url: str) -> t.Iterator[t.Tuple[str, str]]:
+def fetch_ipv4_assignments(url: str) -> t.Iterator[tuple[str, str]]:
     """Fetch WHOIS server list for the IPv4 /8 assignments from IANA.
 
     Args:
@@ -71,7 +69,7 @@ def munge_zone(zone: str) -> str:
     return zone.strip("\u200e\u200f.").encode("idna").decode().lower()
 
 
-def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]) -> t.Iterator[t.Tuple[str, str]]:
+def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str]) -> t.Iterator[tuple[str, str]]:
     """Scrape IANA's root zone database for WHOIS servers.
 
     Args:
@@ -109,7 +107,7 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
         yield (zone, whois_server)
 
 
-def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[t.Tuple[str, str]]:
+def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[tuple[str, str]]:
     """Extract zone URLs from the root zone database HTML.
 
     Args:
