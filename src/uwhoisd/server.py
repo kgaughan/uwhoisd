@@ -1,10 +1,19 @@
 import asyncio
+import typing as t
 
 from . import utils
 
 
-async def start_service(iface: str, port: int, whois):
-    async def handle_request(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+async def start_service(iface: str, port: int, whois: t.Callable[[str], t.Awaitable[str]]) -> None:
+    """Start the WHOIS server.
+
+    Args:
+        iface: The interface to bind to.
+        port: The port to bind to.
+        whois: The WHOIS query function to use.
+    """
+
+    async def handle_request(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         try:
             query = await asyncio.wait_for(reader.readuntil(b"\r\n"), timeout=5)
         except asyncio.TimeoutError:

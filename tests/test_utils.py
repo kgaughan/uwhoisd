@@ -27,7 +27,7 @@ def test_malformed_domains(fqdn):
 
 
 @pytest.mark.parametrize(
-    "to_split,expected",
+    ("to_split", "expected"),
     [
         ("stereochro.me", ["stereochro", "me"]),
         ("stereochro.me.", ["stereochro", "me"]),
@@ -41,7 +41,7 @@ def test_split_fqdn(to_split, expected):
 
 
 @pytest.mark.parametrize(
-    "to_decode,expected",
+    ("to_decode", "expected"),
     [
         ("foo", "foo"),
         ('"foo"', "foo"),

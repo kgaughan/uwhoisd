@@ -13,12 +13,12 @@ class TokenBucket:
         limit: maximum number of tokens the bucket can contain
     """
 
-    __slots__ = [
+    __slots__ = (
         "_available",
         "limit",
         "rate",
         "ts",
-    ]
+    )
 
     clock = staticmethod(time.time)
 
@@ -56,13 +56,13 @@ class TokenBucket:
         self.ts = ts
         return self._available
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.ts == other.ts
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         return self.ts < other.ts
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self._available, self.limit, self.rate, self.ts))
 
     def __getstate__(self):
