@@ -11,6 +11,7 @@ class TokenBucket:
     Args:
         rate: token refill rate (per second) of bucket
         limit: maximum number of tokens the bucket can contain
+
     """
 
     __slots__ = (
@@ -37,6 +38,7 @@ class TokenBucket:
 
         Returns:
             `True` if the requested number could be consumed, otherwise `False`.
+
         """
         if 0 <= tokens <= self.tokens:
             self._available -= tokens
@@ -49,6 +51,7 @@ class TokenBucket:
 
         Returns:
             The number of available tokens.
+
         """
         ts = self.clock()
         if self._available < self.limit:
@@ -66,7 +69,7 @@ class TokenBucket:
         return hash((self._available, self.limit, self.rate, self.ts))
 
     def __getstate__(self):
-        return dict(zip(self.__slots__, [getattr(self, attr) for attr in self.__slots__]))
+        return dict(zip(self.__slots__, [getattr(self, attr) for attr in self.__slots__], strict=False))
 
     def __setstate__(self, state):
         for k in self.__slots__:

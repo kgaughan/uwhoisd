@@ -13,6 +13,7 @@ async def query_whois(host: str, port: int, query: str) -> str:
 
     Returns:
         The WHOIS response.
+
     """
     reader, writer = await asyncio.open_connection(host, port)
 

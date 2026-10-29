@@ -1,0 +1,13 @@
+---
+# https://docs.github.com/en/github/administering-a-repository/enabling-and-disabling-version-updates
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"

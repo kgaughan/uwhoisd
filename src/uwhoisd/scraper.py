@@ -29,6 +29,7 @@ def fetch_ipv4_assignments(url: str) -> t.Iterator[tuple[str, str]]:
 
     Yields:
         Tuples of (prefix, whois server).
+
     """
     res = requests.get(url, stream=False, timeout=10)
     root = ET.fromstring(res.text)  # noqa: S314
@@ -52,6 +53,7 @@ def fetch(session: requests.Session, url: str) -> BeautifulSoup:
 
     Returns:
         The parsed HTML body.
+
     """
     return BeautifulSoup(session.get(url, stream=False, timeout=10).text, "html.parser")
 
@@ -64,6 +66,7 @@ def munge_zone(zone: str) -> str:
 
     Returns:
         The munged zone.
+
     """
     # The .strip() here is needed for RTL scripts like Arabic.
     return zone.strip("\u200e\u200f.").encode("idna").decode().lower()
@@ -78,6 +81,7 @@ def scrape_whois_from_iana(root_zone_db_url: str, existing: t.Mapping[str, str])
 
     Yields:
         Tuples of (zone, whois server).
+
     """
     session = requests.Session()
 
@@ -116,6 +120,7 @@ def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[tuple[st
 
     Yields:
         Tuples of (zone, zone URL).
+
     """
     for link in body.select("#tld-table .tld a"):
         if "href" not in link.attrs or link.string is None:  # pragma: no cover
@@ -133,7 +138,7 @@ def extract_zone_urls(base_url: str, body: BeautifulSoup) -> t.Iterator[tuple[st
         yield (munge_zone(link.string), urljoin(base_url, link.attrs["href"]))
 
 
-def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
+def extract_whois_server(body: BeautifulSoup) -> str | None:
     """Extract the WHOIS server from a zone HTML page.
 
     Args:
@@ -141,6 +146,7 @@ def extract_whois_server(body: BeautifulSoup) -> t.Optional[str]:
 
     Returns:
         The WHOIS server, or `None` if not found.
+
     """
     whois_server_label = body.find("b", string="WHOIS Server:")
     if whois_server_label is None or whois_server_label.next_sibling is None:
@@ -154,6 +160,7 @@ def make_arg_parser() -> argparse.ArgumentParser:
 
     Returns:
         The argument parser.
+
     """
     parser = argparse.ArgumentParser(description="Scrap WHOIS data.")
     parser.add_argument("--config", help="uwhoisd configuration")

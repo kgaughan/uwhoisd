@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Cache(t.Protocol):
     """A WHOIS cache protocol."""
 
-    def get(self, key: str) -> t.Optional[str]:
+    def get(self, key: str) -> str | None:
         """Retrieve a value from the cache.
 
         Args:
@@ -20,6 +20,7 @@ class Cache(t.Protocol):
 
         Returns:
             The cached value, or `None` if not found.
+
         """
 
     def set(self, key: str, value: str) -> None:
@@ -28,6 +29,7 @@ class Cache(t.Protocol):
         Args:
             key: The cache key to store the value under.
             value: The value to store.
+
         """
 
 
@@ -35,7 +37,7 @@ class UnknownCacheError(Exception):
     """The supplied cache type name cannot be found."""
 
 
-def get_cache(cfg: dict[str, str]) -> t.Optional[Cache]:
+def get_cache(cfg: dict[str, str]) -> Cache | None:
     """Attempt to load the configured cache.
 
     Args:
@@ -44,6 +46,7 @@ def get_cache(cfg: dict[str, str]) -> t.Optional[Cache]:
             cache constructor.
 
     Returns: The cache object, or `None` if caching is disabled.
+
     """
     cache_name = cfg.pop("type", "null")
     if cache_name == "null":
@@ -59,7 +62,7 @@ def get_cache(cfg: dict[str, str]) -> t.Optional[Cache]:
 
 
 def wrap_whois(
-    cache: t.Optional[Cache],
+    cache: Cache | None,
     whois_func: t.Callable[[str], t.Awaitable[str]],
 ) -> t.Callable[[str], t.Awaitable[str]]:
     """Wrap a WHOIS query function with a cache.
@@ -70,6 +73,7 @@ def wrap_whois(
 
     Returns:
         The wrapped WHOIS query function.
+
     """
     if cache is None:
         return whois_func
@@ -97,6 +101,7 @@ class LFU:
     Args:
         max_size: Maximum number of entries the cache can contain.
         max_age: Maximum number of seconds to consider an entry live.
+
     """
 
     # I may end up reimplementing an LRU cache if it turns out that's more apt,
@@ -129,6 +134,7 @@ class LFU:
 
         Args:
             key: The cache key to evict.
+
         """
         counter, value = self.cache[key]
         counter -= 1
@@ -147,7 +153,7 @@ class LFU:
                 break
             self.attempt_eviction(key)
 
-    def get(self, key: str) -> t.Optional[str]:
+    def get(self, key: str) -> str | None:
         """Pull a value from the cache corresponding to the key.
 
         Args:
@@ -155,6 +161,7 @@ class LFU:
 
         Returns:
             The cached value, or `None` if not found.
+
         """
         self.evict_expired()
         if key not in self.cache:
@@ -170,6 +177,7 @@ class LFU:
         Args:
             key: The cache key to store the value under.
             value: The value to store.
+
         """
         if len(self.queue) == self.max_size:
             self.evict_one()
