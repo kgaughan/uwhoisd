@@ -35,7 +35,7 @@ class UWhois:
 
     def __init__(self) -> None:
         super().__init__()
-        self.suffix: t.Optional[str] = None
+        self.suffix: str | None = None
         self.overrides: dict[str, str] = {}
         self.prefixes: dict[str, str] = {}
         self.recursion_patterns: dict[str, re.Pattern] = {}
@@ -48,6 +48,7 @@ class UWhois:
 
         Args:
             parser: The config parser to read from.
+
         """
         self.registry_whois = parser.get_bool("uwhoisd", "registry_whois")
         self.page_feed = parser.get_bool("uwhoisd", "page_feed")
@@ -68,6 +69,7 @@ class UWhois:
 
         Returns:
             A tuple of the WHOIS server and port.
+
         """
         server = self.overrides.get(zone, f"{zone}.{self.suffix}")
         if ":" in server:
@@ -75,7 +77,7 @@ class UWhois:
             return server, int(port)
         return server, PORT
 
-    def get_registrar_whois_server(self, zone: str, response: str) -> t.Optional[str]:
+    def get_registrar_whois_server(self, zone: str, response: str) -> str | None:
         """Extract the registrar's WHOIS server from the registry response.
 
         Args:
@@ -84,6 +86,7 @@ class UWhois:
 
         Returns:
             The registrar's WHOIS server, or None if not found.
+
         """
         matches = self.recursion_patterns[zone].search(response)
         return None if matches is None else matches.group("server")
@@ -96,6 +99,7 @@ class UWhois:
 
         Returns:
             The prefix string.
+
         """
         return self.prefixes.get(zone, "")
 
@@ -107,6 +111,7 @@ class UWhois:
 
         Returns:
             The WHOIS response.
+
         """
         # Figure out the zone whose WHOIS server we're meant to be querying.
         for zone in self.conservative:

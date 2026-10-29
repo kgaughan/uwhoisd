@@ -25,6 +25,7 @@ class ConfigParser(configparser.ConfigParser):
 
         Returns:
             The boolean value of the option.
+
         """
         return self.get(section, option).lower() in ("1", "true", "yes", "on")
 
@@ -37,6 +38,7 @@ class ConfigParser(configparser.ConfigParser):
 
         Returns:
             The list of lines.
+
         """
         lines = []
         for line in self.get(section, option).split("\n"):
@@ -52,7 +54,7 @@ class ConfigParser(configparser.ConfigParser):
         return {}
 
 
-def make_config_parser(config_path: t.Optional[str] = None) -> ConfigParser:
+def make_config_parser(config_path: str | None = None) -> ConfigParser:
     """Create a config parser.
 
     This will load the default config from the package, and then overlay
@@ -65,6 +67,7 @@ def make_config_parser(config_path: t.Optional[str] = None) -> ConfigParser:
 
     Returns:
         The config parser.
+
     """
     parser = ConfigParser()
 
@@ -88,6 +91,7 @@ def is_well_formed_fqdn(fqdn: str) -> bool:
 
     Returns:
         True if the FQDN is well formed, False otherwise.
+
     """
     return FQDN_PATTERN.match(fqdn) is not None
 
@@ -100,6 +104,7 @@ def split_fqdn(fqdn: str) -> t.List[str]:
 
     Returns:
         A list of [domain name, zone], or an empty list if the FQDN is empty.
+
     """
     return fqdn.rstrip(".").split(".", 1) if fqdn else []
 
@@ -115,6 +120,7 @@ def decode_value(s: str) -> str:
 
     Returns:
         The decoded string.
+
     """
     if len(s) > 1 and s[0] in ('"', "'"):
         if s[0] != s[-1]:

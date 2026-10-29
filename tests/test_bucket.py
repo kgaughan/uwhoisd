@@ -6,9 +6,7 @@ from . import utils
 
 
 class TokenBucket(rl.TokenBucket):
-    """
-    A token bucket with a fake clock.
-    """
+    """A token bucket with a fake clock."""
 
     def __init__(self, rate, limit, clock=None):
         self.clock = utils.Clock() if clock is None else clock
