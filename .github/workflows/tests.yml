@@ -44,7 +44,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@v10.3.2
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.13.0"
           python-version: ${{ matrix.python-version }}
